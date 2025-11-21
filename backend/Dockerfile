@@ -46,8 +46,12 @@ COPY --from=builder /app/dist ./dist
 # Create uploads directory
 RUN mkdir -p /app/uploads/images
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "run", "start:prod"]
+# Use entrypoint script (applies migrations automatically)
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

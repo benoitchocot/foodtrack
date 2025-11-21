@@ -1,0 +1,61 @@
+version: '3.8'
+
+volumes:
+  jow-postgres-data:
+
+services:
+  jow-postgres:
+    image: postgres:16-alpine
+    container_name: jow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: jow_user
+      POSTGRES_PASSWORD: ${JOW_DB_PASSWORD}
+      POSTGRES_DB: jow_db
+    volumes:
+      - jow-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jow_user -d jow_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  jow-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jow-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://jow_user:${JOW_DB_PASSWORD}@jow-postgres:5432/jow_db?schema=public
+      JWT_SECRET: ${JOW_JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: ${FRONTEND_URL:-https://food.chocot.be}
+      SMTP_HOST: ${JOW_SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${JOW_SMTP_PORT:-587}
+      SMTP_SECURE: ${JOW_SMTP_SECURE:-false}
+      SMTP_USER: ${JOW_SMTP_USER}
+      SMTP_PASS: ${JOW_SMTP_PASS}
+      SMTP_FROM: ${JOW_SMTP_FROM:-noreply@food.chocot.be}
+      ADMIN_EMAIL: ${JOW_ADMIN_EMAIL}
+      FRONTEND_URL: ${FRONTEND_URL:-https://food.chocot.be}
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      jow-postgres:
+        condition: service_healthy
+    # Les migrations sont gérées automatiquement par docker-entrypoint.sh
+
+  jow-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jow-frontend
+    restart: always
+    environment:
+      NUXT_PUBLIC_API_BASE: ${API_URL:-https://apifood.chocot.be}
+    depends_on:
+      - jow-backend
+
