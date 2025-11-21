@@ -15,10 +15,17 @@ COPY prisma ./prisma/
 # Generate Prisma Client
 RUN npm run prisma:generate
 
+# Copy and make start-dev.sh executable
+COPY start-dev.sh /app/start-dev.sh
+RUN chmod +x /app/start-dev.sh
+
+# Install tsx for seed script
+RUN npm install -g tsx
+
 # Expose port
 EXPOSE 3000
 
 # The source code will be mounted as a volume in docker-compose
-# Start in development mode
-CMD ["npm", "run", "start:dev"]
+# Start in development mode with migrations and seed
+CMD ["/app/start-dev.sh"]
 

@@ -42,7 +42,7 @@ services:
         condition: service_healthy
     networks:
       - jow-network
-    command: npm run start:dev
+    command: /app/start-dev.sh
 
   frontend:
     build:

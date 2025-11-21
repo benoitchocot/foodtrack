@@ -49,8 +49,10 @@ async function main() {
 
     // Seed Ingredients
     console.log('Seeding ingredients...');
-    const ingredients = await prisma.ingredient.createMany({
-        data: [
+    try {
+        await prisma.ingredient.createMany({
+            skipDuplicates: true,
+            data: [
             // Fresh vegetables
             { name: 'tomate', category: IngredientCategory.FRESH, defaultUnit: Unit.PIECE },
             { name: 'oignon', category: IngredientCategory.FRESH, defaultUnit: Unit.PIECE },
@@ -131,9 +133,16 @@ async function main() {
             { name: 'laurier', category: IngredientCategory.SPICES, defaultUnit: Unit.PIECE },
             { name: 'herbes de provence', category: IngredientCategory.SPICES, defaultUnit: Unit.TSP },
         ],
-    });
-
-    console.log(`✅ Created ${ingredients.count} ingredients`);
+        });
+        console.log('✅ Ingredients seeded');
+    } catch (error: any) {
+        if (error.code === 'P2021') {
+            console.log('⚠️  ingredients table does not exist yet, skipping seed...');
+            return;
+        } else {
+            throw error;
+        }
+    }
 
     // Get all ingredients for recipes
     const allIngredients = await prisma.ingredient.findMany();

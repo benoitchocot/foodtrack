@@ -11,7 +11,7 @@ done
 
 echo "✅ Database is ready!"
 
-# Appliquer le schéma (db push est plus fiable que migrate deploy en production)
+# Appliquer le schéma (db push est plus fiable que migrate deploy en dev)
 echo "📦 Applying database schema..."
 if npx prisma db push --accept-data-loss; then
     echo "✅ Database schema applied successfully"
@@ -26,7 +26,7 @@ npm run prisma:seed || {
     echo "⚠️  Seed completed (may have skipped if data already exists)"
 }
 
-# Démarrer l'application
-echo "🚀 Starting application..."
-exec npm run start:prod
+# Démarrer l'application en mode dev
+echo "🚀 Starting application in development mode..."
+exec npm run start:dev
 
