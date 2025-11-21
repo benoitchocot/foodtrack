@@ -39,7 +39,8 @@ RUN npm ci --only=production && \
 # Install tsx for running TypeScript files (better than ts-node)
 RUN npm install -g tsx
 
-# Copy Prisma schema, seed file and generate client
+# Copy Prisma schema, migrations, seed file and generate client
+# Copy prisma directory (includes schema, migrations, and seed)
 COPY prisma ./prisma/
 RUN npx prisma generate
 
