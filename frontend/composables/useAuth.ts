@@ -2,6 +2,7 @@ interface User {
     id: string
     email: string
     name: string
+    hasSeenTutorial?: boolean
 }
 
 interface AuthResponse {
@@ -62,12 +63,23 @@ export const useAuth = () => {
 
     const fetchProfile = async () => {
         try {
-            const profile = await api.get<User>('/auth/profile')
+            const profile = await api.get<User>('/users/me')
             user.value = profile
             return profile
         } catch (error) {
             logout()
             throw error
+        }
+    }
+
+    const markTutorialAsSeen = async () => {
+        try {
+            await api.patch('/users/me/tutorial-seen')
+            if (user.value) {
+                user.value.hasSeenTutorial = true
+            }
+        } catch (error) {
+            console.error('Failed to mark tutorial as seen:', error)
         }
     }
 
@@ -88,5 +100,6 @@ export const useAuth = () => {
         register,
         logout,
         fetchProfile,
+        markTutorialAsSeen,
     }
 }
