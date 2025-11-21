@@ -79,15 +79,23 @@ if docker exec jow-postgres pg_isready -U jow_user -d jow_db >/dev/null 2>&1; th
     sleep 15
     
     # Migrations
-    echo "📦 Migrations..."
+    echo "📦 Vérification des migrations..."
+    docker exec jow-backend ls -la /app/prisma/migrations/ || echo "⚠️  Migrations directory not found"
+    
+    echo "📦 Application des migrations..."
     docker exec jow-backend npx prisma migrate deploy || {
         echo "⚠️  migrate deploy failed, trying db push..."
         docker exec jow-backend npx prisma db push --accept-data-loss
     }
     
-    # Seed
+    # Attendre un peu pour que les migrations soient bien appliquées
+    sleep 2
+    
+    # Seed (seulement si les tables existent)
     echo "🌱 Seed..."
-    docker exec jow-backend npm run prisma:seed
+    docker exec jow-backend npm run prisma:seed || {
+        echo "⚠️  Seed failed, but continuing..."
+    }
     
     # Frontend
     echo "🎨 Frontend..."

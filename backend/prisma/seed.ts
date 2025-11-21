@@ -5,12 +5,47 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting seed...');
 
-    // Clear existing data
+    // Clear existing data (only if tables exist)
     console.log('Clearing existing data...');
-    await prisma.recipeStep.deleteMany();
-    await prisma.recipeIngredient.deleteMany();
-    await prisma.recipe.deleteMany();
-    await prisma.ingredient.deleteMany();
+    try {
+        await prisma.recipeStep.deleteMany();
+    } catch (error: any) {
+        if (error.code === 'P2021') {
+            console.log('⚠️  recipe_steps table does not exist yet, skipping...');
+        } else {
+            throw error;
+        }
+    }
+    
+    try {
+        await prisma.recipeIngredient.deleteMany();
+    } catch (error: any) {
+        if (error.code === 'P2021') {
+            console.log('⚠️  recipe_ingredients table does not exist yet, skipping...');
+        } else {
+            throw error;
+        }
+    }
+    
+    try {
+        await prisma.recipe.deleteMany();
+    } catch (error: any) {
+        if (error.code === 'P2021') {
+            console.log('⚠️  recipes table does not exist yet, skipping...');
+        } else {
+            throw error;
+        }
+    }
+    
+    try {
+        await prisma.ingredient.deleteMany();
+    } catch (error: any) {
+        if (error.code === 'P2021') {
+            console.log('⚠️  ingredients table does not exist yet, skipping...');
+        } else {
+            throw error;
+        }
+    }
 
     // Seed Ingredients
     console.log('Seeding ingredients...');
