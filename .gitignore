@@ -4,8 +4,12 @@ playwright/.cache/
 node_modules/
 .env
 .env.production
+.env.local
+.env.*.local
 dist/
 .nuxt/
 .output/
 backend/uploads/
 uploads/
+*.log
+.DS_Store
