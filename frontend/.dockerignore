@@ -1,11 +1,11 @@
 node_modules
-dist
+.nuxt
+.output
 .env
-.env.test
 npm-debug.log
 .DS_Store
-coverage
 .vscode
 .idea
 *.log
-uploads/
+dist
+
