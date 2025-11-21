@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,11 +14,16 @@ export class UsersController {
 
     @Get('me')
     async getCurrentUser(@Request() req: any) {
+        const user = await this.usersService.findById(req.user.id);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
         return {
-            id: req.user.id,
-            email: req.user.email,
-            firstName: req.user.firstName,
-            lastName: req.user.lastName,
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            hasSeenTutorial: user.hasSeenTutorial,
         };
     }
 
@@ -30,6 +35,17 @@ export class UsersController {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            hasSeenTutorial: user.hasSeenTutorial,
+        };
+    }
+
+    @Patch('me/tutorial-seen')
+    @ApiOperation({ summary: 'Mark tutorial as seen' })
+    async markTutorialAsSeen(@Request() req: any) {
+        const user = await this.usersService.update(req.user.id, { hasSeenTutorial: true });
+        return {
+            id: user.id,
+            hasSeenTutorial: user.hasSeenTutorial,
         };
     }
 

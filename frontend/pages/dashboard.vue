@@ -141,19 +141,19 @@
 
     <!-- User Guide Modal -->
     <UserGuide
-      v-if="currentGuide"
+      v-if="currentGuide && showGuideModal"
       :guide="currentGuide"
       :current-step-index="currentStepIndex"
       :total-steps="journeySteps.length"
-      @dismiss="showGuideModal = false"
-      @skip="showGuideModal = false"
-      @action="showGuideModal = false"
+      @dismiss="handleGuideDismiss"
+      @skip="handleGuideDismiss"
+      @action="handleGuideDismiss"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-const { user, logout } = useAuth()
+const { user, logout, markTutorialAsSeen } = useAuth()
 const { t } = useI18n()
 const router = useRouter()
 const api = useApi()
@@ -163,7 +163,6 @@ const {
   checkHasGeneratedMealPlan, 
   checkHasCreatedShoppingList,
   getCurrentStep,
-  isNewUser 
 } = useUserJourney()
 
 const showGuideModal = ref(false)
@@ -204,12 +203,12 @@ const currentStepIndex = computed(() => {
 })
 
 const showJourneyProgress = computed(() => {
-  return currentStepIndex.value >= 0 || isNewUser.value
+  return currentStepIndex.value >= 0
 })
 
 // Get current guide based on step
 const currentGuide = computed(() => {
-  if (!showGuideModal.value || currentStepIndex.value < 0) return null
+  if (currentStepIndex.value < 0) return null
   
   const step = journeySteps.value[currentStepIndex.value]
   if (!step || step.completed) return null
@@ -253,8 +252,8 @@ onMounted(async () => {
   hasMealPlan.value = await checkHasGeneratedMealPlan()
   hasShoppingList.value = await checkHasCreatedShoppingList()
   
-  // Show guide automatically for new users on first visit
-  if (isNewUser.value && currentStepIndex.value >= 0) {
+  // Show guide automatically for users who haven't seen it yet
+  if (!user.value?.hasSeenTutorial && currentStepIndex.value >= 0) {
     // Small delay to let the page render
     setTimeout(() => {
       showGuideModal.value = true
@@ -264,6 +263,14 @@ onMounted(async () => {
 
 const handleLogout = () => {
   logout()
+}
+
+const handleGuideDismiss = async () => {
+  showGuideModal.value = false
+  // Mark tutorial as seen in database
+  if (!user.value?.hasSeenTutorial) {
+    await markTutorialAsSeen()
+  }
 }
 
 definePageMeta({
