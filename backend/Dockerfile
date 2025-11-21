@@ -36,10 +36,10 @@ COPY package*.json ./
 RUN npm ci --only=production && \
     npm cache clean --force
 
-# Install ts-node and typescript globally for seed script
-RUN npm install -g ts-node typescript @types/node
+# Install tsx for running TypeScript files (better than ts-node)
+RUN npm install -g tsx
 
-# Copy Prisma schema and generate client
+# Copy Prisma schema, seed file and generate client
 COPY prisma ./prisma/
 RUN npx prisma generate
 

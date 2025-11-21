@@ -21,8 +21,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:seed:prod": "node -r ts-node/register prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

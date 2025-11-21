@@ -33,10 +33,20 @@ echo "✅ docker-compose.yml utilise bien \${JOW_DB_PASSWORD}"
 echo "⏹️  Arrêt des services..."
 docker compose stop jow-postgres jow-backend jow-frontend 2>/dev/null || true
 
+# Supprimer les conteneurs
+echo "🗑️  Suppression des conteneurs..."
+docker compose rm -f jow-postgres jow-backend jow-frontend 2>/dev/null || true
+
+# Attendre un peu
+sleep 2
+
 # Supprimer le volume
 if docker volume ls | grep -q jow-postgres-data; then
     echo "🗑️  Suppression du volume PostgreSQL..."
-    docker volume rm jow-postgres-data
+    docker volume rm jow-postgres-data 2>/dev/null || {
+        echo "⚠️  Le volume est encore utilisé, forçons la suppression..."
+        docker volume rm jow-postgres-data --force 2>/dev/null || true
+    }
 fi
 
 # Rebuild backend (pour ts-node)
