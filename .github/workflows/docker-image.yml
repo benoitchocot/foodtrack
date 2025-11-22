@@ -1,62 +1,64 @@
-name: Deploy to Production
+name: Deploy Foodtrack (LAN)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    
+    runs-on: self-hosted
+
     steps:
-    - name: Deploy to production server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        timeout: 30m
-        script: |
-          set -e
-          
-          echo "🚀 Démarrage du déploiement..."
-          
-          # Aller dans le répertoire du projet
-          cd ~/foodtrack
-          
-          # Afficher le statut git
-          echo "📋 Statut Git avant pull..."
-          git status
-          
-          # Récupérer les dernières modifications
-          echo "⬇️  Récupération du code..."
-          git fetch origin
-          
-          # Vérifier si on est sur main
-          current_branch=$(git rev-parse --abbrev-ref HEAD)
-          if [ "$current_branch" != "main" ]; then
-            echo "⚠️  Vous n'êtes pas sur la branche main (actuellement: $current_branch)"
-            echo "🔀 Basculement sur main..."
-            git checkout main
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s\n" "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Debug SSH_HOST
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          if [ -z "${SSH_HOST}" ]; then
+            echo "SSH_HOST is empty"; exit 1
           fi
-          
-          # Pull les dernières modifications
-          echo "⬇️  Pull des modifications..."
-          git pull origin main
-          
-          # Vérifier que le script fix-all.sh existe
-          if [ ! -f "fix-all.sh" ]; then
-            echo "❌ ERREUR: fix-all.sh n'existe pas dans ~/foodtrack"
-            exit 1
-          fi
-          
-          # Rendre le script exécutable
-          chmod +x fix-all.sh
-          
-          # Exécuter le script de déploiement
-          echo "🔄 Exécution du script de déploiement..."
-          ./fix-all.sh
-          
-          echo ""
-          echo "✅ Déploiement terminé avec succès !"
+          echo "SSH_HOST length: ${#SSH_HOST}"
+
+      - name: Deploy Food stack over SSH
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+        run: |
+          ssh -p "$SSH_PORT" \
+              -o StrictHostKeyChecking=yes \
+              -o PasswordAuthentication=no \
+              "$SSH_USER@$SSH_HOST" << 'EOF'
+            set -e
+
+            # Aller dans le dossier où se trouve le docker-compose du projet muscu
+            cd ~/foodtrack  # ⬅️ adapte si ton projet est ailleurs
+
+            # Optionnel: si ce dossier est un clone git, on met à jour le code
+            if [ -d .git ]; then
+              git fetch --all || true
+              git checkout main || true
+              git pull --rebase || true
+            fi
+
+            ./fix-al
+            # Nettoyage des anciennes images (optionnel)
+            docker image prune -f
+          EOF
+      - name: Health check Muscu front
+        run: |
+        shell: bash
