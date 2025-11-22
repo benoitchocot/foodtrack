@@ -3,7 +3,7 @@
 
 set -e
 
-cd ~/pi
+cd ~/foodtrack
 
 echo "📝 Chargement des variables depuis ~/foodtrack/.env.production..."
 if [ ! -f ~/foodtrack/.env.production ]; then
