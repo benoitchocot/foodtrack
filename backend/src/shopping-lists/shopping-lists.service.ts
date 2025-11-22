@@ -46,7 +46,7 @@ export class ShoppingListsService {
         // Generate title if not provided
         const title =
             generateDto.title ||
-            `Liste de courses - ${mealPlan.title || new Date().toLocaleDateString('fr-FR')}`;
+            `Liste de courses - ${mealPlan.title || `Menu - ${new Date().toISOString().split('T')[0]}`}`;
 
         // Create shopping list
         const shoppingList = await this.prisma.shoppingList.create({

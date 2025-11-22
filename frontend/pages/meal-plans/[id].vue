@@ -26,7 +26,7 @@
       <div v-else-if="mealPlan" class="space-y-6">
         <div class="card">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ mealPlan.title }}</h1>
-          <p class="text-gray-600 mb-4">
+          <p v-if="mealPlan.createdAt" class="text-gray-600 mb-4">
             {{ $t('mealPlans.created') }} {{ formatDate(mealPlan.createdAt) }}
           </p>
           <div class="flex gap-2">
@@ -88,8 +88,15 @@ const handleLogout = () => {
   logout()
 }
 
-const formatDate = (dateString: string) => {
-  return format(new Date(dateString), 'MMM d, yyyy')
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'MMM d, yyyy')
+  } catch {
+    return ''
+  }
 }
 
 const generateShoppingList = async () => {

@@ -34,7 +34,7 @@
               {{ plan.recipes?.length || 0 }} {{ $t('mealPlans.recipesCount') }}
             </span>
           </div>
-          <p class="text-gray-600 text-sm mb-4">
+          <p v-if="plan.createdAt" class="text-gray-600 text-sm mb-4">
             {{ $t('mealPlans.created') }} {{ formatDate(plan.createdAt) }}
           </p>
           <div class="flex gap-2">
@@ -75,8 +75,15 @@ const handleLogout = () => {
   logout()
 }
 
-const formatDate = (dateString: string) => {
-  return format(new Date(dateString), 'dd/MM/yyyy')
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'dd/MM/yyyy')
+  } catch {
+    return ''
+  }
 }
 
 const generateShoppingList = async (mealPlanId: string) => {

@@ -59,9 +59,8 @@ export class MealPlansService {
         const maxPrepTime = generateDto.maxPrepTime || settings?.maxPrepTime || 120;
         const toolsAvailable = generateDto.toolsAvailable || settings?.toolsAvailable || [];
 
-        // Create a simple title based on creation date
-        const today = new Date();
-        const title = `Menu du ${today.toLocaleDateString('fr-FR')}`;
+        // Create a simple title
+        const title = `Menu - ${new Date().toISOString().split('T')[0]}`;
 
         // Create meal plan
         const mealPlan = await this.prisma.mealPlan.create({
@@ -278,7 +277,7 @@ export class MealPlansService {
                         },
                     },
                     orderBy: {
-                        plannedFor: 'asc',
+                        createdAt: 'asc',
                     },
                 },
             },
@@ -341,7 +340,6 @@ export class MealPlansService {
                 where: { id: existing.id },
                 data: {
                     servings: addRecipeDto.servings,
-                    plannedFor: addRecipeDto.plannedFor ? new Date(addRecipeDto.plannedFor) : undefined,
                 },
                 include: {
                     recipe: true,
@@ -354,7 +352,6 @@ export class MealPlansService {
                 mealPlanId,
                 recipeId: addRecipeDto.recipeId,
                 servings: addRecipeDto.servings,
-                plannedFor: addRecipeDto.plannedFor ? new Date(addRecipeDto.plannedFor) : undefined,
             },
             include: {
                 recipe: true,

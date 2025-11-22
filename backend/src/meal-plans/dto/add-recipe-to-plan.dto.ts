@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min } from 'class-validator';
 
 export class AddRecipeToPlanDto {
     @IsString()
@@ -8,8 +8,4 @@ export class AddRecipeToPlanDto {
     @IsInt()
     @Min(1)
     servings: number;
-
-    @IsDateString()
-    @IsOptional()
-    plannedFor?: string;
 }
