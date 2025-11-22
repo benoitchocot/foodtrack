@@ -1,8 +1,12 @@
-import { IsOptional, IsEnum, IsArray, IsInt, Min } from 'class-validator';
+import { IsOptional, IsEnum, IsArray, IsInt, Min, IsString } from 'class-validator';
 import { DietType, Difficulty } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
 export class RecipeQueryDto {
+    @IsOptional()
+    @IsString()
+    search?: string;
+
     @IsOptional()
     @IsArray()
     @IsEnum(DietType, { each: true })

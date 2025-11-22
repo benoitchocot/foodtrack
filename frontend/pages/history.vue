@@ -72,9 +72,6 @@
                   {{ plan.recipes?.length || 0 }} {{ $t('history.mealPlans.recipesCount') }}
                 </span>
               </div>
-              <p class="text-gray-600 text-sm mb-4">
-                {{ formatDate(plan.startDate) }} - {{ formatDate(plan.endDate) }}
-              </p>
               <p class="text-gray-500 text-xs mb-4">
                 {{ $t('common.created') }}: {{ formatDateTime(plan.createdAt) }}
               </p>

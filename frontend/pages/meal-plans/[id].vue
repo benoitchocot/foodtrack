@@ -27,7 +27,7 @@
         <div class="card">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ mealPlan.title }}</h1>
           <p class="text-gray-600 mb-4">
-            {{ formatDate(mealPlan.startDate) }} - {{ formatDate(mealPlan.endDate) }}
+            {{ $t('mealPlans.created') }} {{ formatDate(mealPlan.createdAt) }}
           </p>
           <div class="flex gap-2">
             <button 
@@ -51,9 +51,6 @@
               class="relative"
             >
               <RecipeCard :recipe="mealPlanRecipe.recipe">
-                <div v-if="mealPlanRecipe.plannedFor" class="mt-2 text-xs text-gray-500">
-                  {{ $t('mealPlans.detail.plannedFor') }}: {{ formatDate(mealPlanRecipe.plannedFor) }}
-                </div>
                 <div class="mt-2 text-xs text-gray-500">
                   {{ $t('recipes.servings') }}: {{ mealPlanRecipe.servings }}
                 </div>

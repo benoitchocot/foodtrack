@@ -18,7 +18,7 @@
             <p class="text-sm text-gray-600">{{ $t('journey.subtitle') }}</p>
           </div>
           <button
-            v-if="currentGuide"
+            v-if="currentGuide && !user?.hasSeenTutorial"
             @click="showGuideModal = true"
             class="btn btn-primary btn-sm"
           >
@@ -160,6 +160,7 @@ const api = useApi()
 
 const { 
   hasCompletedOnboarding, 
+  checkHasCompletedOnboarding,
   checkHasGeneratedMealPlan, 
   checkHasCreatedShoppingList,
   getCurrentStep,
@@ -208,7 +209,8 @@ const showJourneyProgress = computed(() => {
 
 // Get current guide based on step
 const currentGuide = computed(() => {
-  if (currentStepIndex.value < 0) return null
+  // Don't show guide if tutorial was already seen or all steps are completed
+  if (user.value?.hasSeenTutorial || currentStepIndex.value < 0) return null
   
   const step = journeySteps.value[currentStepIndex.value]
   if (!step || step.completed) return null
@@ -246,18 +248,68 @@ const currentGuide = computed(() => {
   return guides[step.id] || null
 })
 
-// Load journey state
-onMounted(async () => {
+// Refresh journey state periodically to detect changes
+const refreshJourneyState = async () => {
+  // Check onboarding status from database first
+  await checkHasCompletedOnboarding()
   currentStep.value = await getCurrentStep()
   hasMealPlan.value = await checkHasGeneratedMealPlan()
   hasShoppingList.value = await checkHasCreatedShoppingList()
+}
+
+// Load journey state
+onMounted(async () => {
+  await refreshJourneyState()
   
   // Show guide automatically for users who haven't seen it yet
-  if (!user.value?.hasSeenTutorial && currentStepIndex.value >= 0) {
+  // Only if:
+  // 1. Tutorial hasn't been seen
+  // 2. There are steps to complete (currentStepIndex >= 0)
+  // 3. There's a current guide available (not all steps completed)
+  if (!user.value?.hasSeenTutorial && currentStepIndex.value >= 0 && currentGuide.value) {
     // Small delay to let the page render
     setTimeout(() => {
       showGuideModal.value = true
     }, 500)
+  }
+})
+
+// Watch for completion of all steps to auto-dismiss tutorial
+// Watch currentStepIndex and currentGuide to detect when steps are completed
+watch([currentStepIndex, currentGuide, () => user.value?.hasSeenTutorial], async (newValues, oldValues) => {
+  const [newStepIndex, newGuide, hasSeenTutorial] = newValues
+  
+  // If tutorial is showing and has been marked as seen, close it
+  if (hasSeenTutorial && showGuideModal.value) {
+    showGuideModal.value = false
+    return
+  }
+  
+  // If all steps are completed, close tutorial and mark as seen
+  if (newStepIndex < 0) {
+    // All steps completed - hide tutorial and mark as seen
+    if (showGuideModal.value) {
+      showGuideModal.value = false
+    }
+    if (!hasSeenTutorial) {
+      await markTutorialAsSeen()
+    }
+    return
+  }
+  
+  // If tutorial is showing but no guide available (step completed), close it
+  if (showGuideModal.value && !newGuide) {
+    showGuideModal.value = false
+    if (!hasSeenTutorial) {
+      await markTutorialAsSeen()
+    }
+  }
+}, { immediate: false })
+
+// Also refresh journey state when needed (e.g., when returning to dashboard)
+watch(() => router.currentRoute.value.path, async (newPath) => {
+  if (newPath === '/dashboard') {
+    await refreshJourneyState()
   }
 })
 

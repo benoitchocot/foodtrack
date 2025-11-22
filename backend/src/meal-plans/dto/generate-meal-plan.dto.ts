@@ -1,15 +1,7 @@
-import { IsDateString, IsInt, Min, Max, IsOptional, IsEnum, IsArray } from 'class-validator';
+import { IsInt, Min, Max, IsOptional, IsEnum, IsArray } from 'class-validator';
 import { DietType, Difficulty } from '@prisma/client';
 
 export class GenerateMealPlanDto {
-    @IsDateString()
-    @IsOptional()
-    startDate?: string;
-
-    @IsDateString()
-    @IsOptional()
-    endDate?: string;
-
     @IsInt()
     @Min(1)
     @Max(21)

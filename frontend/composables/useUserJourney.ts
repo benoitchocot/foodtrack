@@ -27,10 +27,50 @@ export const useUserJourney = () => {
     }
   }
 
+  // State to track if onboarding is completed (checked from database)
+  const hasCompletedOnboardingState = useState<boolean>('hasCompletedOnboarding', () => false)
+  
   // Check if user has completed onboarding
+  // This checks both localStorage and the database (settings)
   const hasCompletedOnboarding = computed(() => {
-    return journeyProgress.value.onboarding === true
+    // First check localStorage (faster)
+    if (journeyProgress.value.onboarding === true) {
+      return true
+    }
+    // Also check the state from database check
+    return hasCompletedOnboardingState.value
   })
+
+  // Check if user has completed onboarding by verifying settings in database
+  const checkHasCompletedOnboarding = async (): Promise<boolean> => {
+    try {
+      const settings = await api.get('/users/me/settings')
+      const completed = settings && 
+                        settings.toolsAvailable && 
+                        Array.isArray(settings.toolsAvailable) &&
+                        settings.toolsAvailable.length > 0
+      
+      // Update state
+      hasCompletedOnboardingState.value = completed
+      
+      // Sync with localStorage if completed
+      if (completed && journeyProgress.value.onboarding !== true) {
+        journeyProgress.value.onboarding = true
+        saveProgress()
+      }
+      
+      return completed
+    } catch (error: any) {
+      // If 404, user has no settings yet - not completed
+      if (error.message?.includes('404') || error.message?.includes('Not Found')) {
+        hasCompletedOnboardingState.value = false
+        return false
+      }
+      // For other errors, return false
+      hasCompletedOnboardingState.value = false
+      return false
+    }
+  }
 
   // Check if user has generated a meal plan (async function, not computed)
   const checkHasGeneratedMealPlan = async (): Promise<boolean> => {
@@ -66,7 +106,9 @@ export const useUserJourney = () => {
 
   // Get current step in journey
   const getCurrentStep = async (): Promise<string | null> => {
-    if (!hasCompletedOnboarding.value) {
+    // First check if onboarding is completed (verify in database)
+    const onboardingCompleted = await checkHasCompletedOnboarding()
+    if (!onboardingCompleted) {
       return 'onboarding'
     }
     
@@ -91,6 +133,7 @@ export const useUserJourney = () => {
   return {
     journeyProgress: readonly(journeyProgress),
     hasCompletedOnboarding,
+    checkHasCompletedOnboarding,
     checkHasGeneratedMealPlan,
     checkHasCreatedShoppingList,
     completeStep,

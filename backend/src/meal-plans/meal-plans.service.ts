@@ -21,8 +21,6 @@ export class MealPlansService {
             data: {
                 userId,
                 title: createMealPlanDto.title,
-                startDate: new Date(createMealPlanDto.startDate),
-                endDate: new Date(createMealPlanDto.endDate),
             },
             include: {
                 recipes: {
@@ -61,30 +59,15 @@ export class MealPlansService {
         const maxPrepTime = generateDto.maxPrepTime || settings?.maxPrepTime || 120;
         const toolsAvailable = generateDto.toolsAvailable || settings?.toolsAvailable || [];
 
-        // Generate dates automatically if not provided
-        // Default: start today, end based on numberOfMeals (assuming ~2 meals per day)
+        // Create a simple title based on creation date
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const startDate = generateDto.startDate 
-            ? new Date(generateDto.startDate)
-            : today;
-        
-        // Calculate end date based on numberOfMeals (assuming ~2 meals per day)
-        const estimatedDays = Math.ceil(generateDto.numberOfMeals / 2);
-        const endDate = generateDto.endDate
-            ? new Date(generateDto.endDate)
-            : new Date(today.getTime() + estimatedDays * 24 * 60 * 60 * 1000);
-        
-        const title = `Menu du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`;
+        const title = `Menu du ${today.toLocaleDateString('fr-FR')}`;
 
         // Create meal plan
         const mealPlan = await this.prisma.mealPlan.create({
             data: {
                 userId,
                 title,
-                startDate,
-                endDate,
             },
         });
 
@@ -97,22 +80,13 @@ export class MealPlansService {
             toolsAvailable,
         );
 
-        // Add selected recipes to meal plan
-        const daysBetween = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        const recipesPerDay = Math.ceil(generateDto.numberOfMeals / daysBetween);
-
-        for (let i = 0; i < selectedRecipes.length; i++) {
-            const recipe = selectedRecipes[i];
-            const dayOffset = Math.floor(i / recipesPerDay);
-            const plannedDate = new Date(startDate);
-            plannedDate.setDate(plannedDate.getDate() + dayOffset);
-
+        // Add selected recipes to meal plan (without date planning)
+        for (const recipe of selectedRecipes) {
             await this.prisma.mealPlanRecipe.create({
                 data: {
                     mealPlanId: mealPlan.id,
                     recipeId: recipe.id,
                     servings: settings?.householdSize || 4,
-                    plannedFor: plannedDate,
                 },
             });
         }
@@ -328,8 +302,6 @@ export class MealPlansService {
             where: { id },
             data: {
                 title: updateMealPlanDto.title,
-                startDate: updateMealPlanDto.startDate ? new Date(updateMealPlanDto.startDate) : undefined,
-                endDate: updateMealPlanDto.endDate ? new Date(updateMealPlanDto.endDate) : undefined,
             },
             include: {
                 recipes: {

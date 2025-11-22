@@ -35,7 +35,7 @@
             </span>
           </div>
           <p class="text-gray-600 text-sm mb-4">
-            {{ formatDate(plan.startDate) }} - {{ formatDate(plan.endDate) }}
+            {{ $t('mealPlans.created') }} {{ formatDate(plan.createdAt) }}
           </p>
           <div class="flex gap-2">
             <NuxtLink :to="`/meal-plans/${plan.id}`" class="btn btn-primary flex-1 text-center">
@@ -76,7 +76,7 @@ const handleLogout = () => {
 }
 
 const formatDate = (dateString: string) => {
-  return format(new Date(dateString), 'MMM d, yyyy')
+  return format(new Date(dateString), 'dd/MM/yyyy')
 }
 
 const generateShoppingList = async (mealPlanId: string) => {
