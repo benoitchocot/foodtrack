@@ -55,7 +55,7 @@ jobs:
               git pull --rebase || true
             fi
 
-            ./fix-al
+            ./fix-all
             # Nettoyage des anciennes images (optionnel)
             docker image prune -f
           EOF
