@@ -51,9 +51,12 @@ if docker volume ls | grep -q jow-postgres-data; then
     }
 fi
 
-# Rebuild backend (pour ts-node)
+# Rebuild backend et frontend (pour ts-node et nouvelles modifications)
 echo "🔨 Rebuild du backend..."
 docker compose build --no-cache jow-backend
+
+echo "🔨 Rebuild du frontend..."
+docker compose build --no-cache jow-frontend
 
 # Démarrer PostgreSQL
 echo "🔄 Démarrage de PostgreSQL..."
