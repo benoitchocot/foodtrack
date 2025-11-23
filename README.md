@@ -520,7 +520,7 @@ Le fichier `database/schema.dbml` sera automatiquement mis à jour.
 ## 📁 Structure du projet
 
 ```
-Jow/
+Foodtrack/
 ├── backend/                    # API NestJS
 │   ├── src/
 │   │   ├── auth/              # Authentification (JWT)
@@ -677,8 +677,8 @@ Consultez le guide de déploiement détaillé : [`DEPLOYMENT.md`](./DEPLOYMENT.m
 
 Le projet est configuré pour fonctionner avec Traefik comme reverse proxy. Les services ont été ajoutés au fichier `swag.yml` :
 
-- **Frontend** : `jow.chocot.be` → Port 3000
-- **Backend API** : `apijow.chocot.be` → Port 3000
+- **Frontend** : `food.chocot.be` → Port 3000
+- **Backend API** : `apifood.chocot.be` → Port 3000
 - **Base de données** : PostgreSQL interne
 
 ### Étapes rapides
@@ -713,9 +713,9 @@ Le projet est configuré pour fonctionner avec Traefik comme reverse proxy. Les 
    ```
 
 6. **Accéder à l'application**
-   - Frontend : https://jow.chocot.be
-   - API : https://apijow.chocot.be
-   - Swagger : https://apijow.chocot.be/api
+   - Frontend : https://food.chocot.be
+   - API : https://apifood.chocot.be
+   - Swagger : https://apifood.chocot.be/api
 
 ### Variables d'environnement production
 
@@ -740,7 +740,7 @@ docker exec jow-postgres pg_dump -U jow_user jow_db > backup.sql
 ### Mise à jour
 
 ```bash
-cd ~/Jow
+cd ~/Foodtrack
 git pull
 docker-compose -f ~/swag.yml build jow-backend jow-frontend
 docker-compose -f ~/swag.yml up -d jow-backend jow-frontend

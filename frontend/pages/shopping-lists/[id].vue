@@ -26,7 +26,7 @@
       <div v-else-if="shoppingList" class="space-y-6">
         <div class="card">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ shoppingList.title }}</h1>
-          <p class="text-gray-600 mb-4">
+          <p v-if="shoppingList.createdAt" class="text-gray-600 mb-4">
             {{ $t('common.created') }} {{ formatDate(shoppingList.createdAt) }}
           </p>
           <div class="flex items-center gap-4">
@@ -202,8 +202,15 @@ const handleLogout = () => {
   logout()
 }
 
-const formatDate = (dateString: string) => {
-  return format(new Date(dateString), 'MMM d, yyyy')
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'MMM d, yyyy')
+  } catch {
+    return ''
+  }
 }
 
 const checkedCount = computed(() => {

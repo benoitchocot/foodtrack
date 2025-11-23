@@ -29,7 +29,7 @@
               {{ list.items?.length || 0 }} {{ $t('shoppingLists.items') }}
             </span>
           </div>
-          <p class="text-gray-600 text-sm mb-4">
+          <p v-if="list.createdAt" class="text-gray-600 text-sm mb-4">
             {{ $t('common.created') }} {{ formatDate(list.createdAt) }}
           </p>
           <div class="flex items-center text-sm text-gray-500">
@@ -65,8 +65,15 @@ const handleLogout = () => {
   logout()
 }
 
-const formatDate = (dateString: string) => {
-  return format(new Date(dateString), 'MMM d, yyyy')
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'MMM d, yyyy')
+  } catch {
+    return ''
+  }
 }
 
 const getCheckedCount = (list: any) => {

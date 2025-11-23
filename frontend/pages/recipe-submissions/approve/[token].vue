@@ -20,7 +20,7 @@
               <p class="text-gray-600">
                 {{ $t('approval.submittedBy') }}: {{ submission.user?.email || 'Unknown' }}
               </p>
-              <p class="text-sm text-gray-500 mt-1">
+              <p v-if="submission.submittedAt" class="text-sm text-gray-500 mt-1">
                 {{ $t('approval.submittedAt') }}: {{ formatDate(submission.submittedAt) }}
               </p>
             </div>
@@ -222,14 +222,21 @@ const error = ref('')
 const actionLoading = ref(false)
 const rejectionReason = ref('')
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return ''
+  }
 }
 
 const loadSubmission = async () => {

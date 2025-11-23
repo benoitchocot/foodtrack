@@ -72,7 +72,7 @@
                   {{ plan.recipes?.length || 0 }} {{ $t('history.mealPlans.recipesCount') }}
                 </span>
               </div>
-              <p class="text-gray-500 text-xs mb-4">
+              <p v-if="plan.createdAt" class="text-gray-500 text-xs mb-4">
                 {{ $t('common.created') }}: {{ formatDateTime(plan.createdAt) }}
               </p>
               <NuxtLink :to="`/meal-plans/${plan.id}`" class="btn btn-primary w-full text-center">
@@ -98,7 +98,7 @@
               :key="view.id"
             >
               <RecipeCard :recipe="view" size="small">
-                <p class="text-xs text-gray-400 mt-2">
+                <p v-if="view.viewedAt" class="text-xs text-gray-400 mt-2">
                   {{ $t('history.recentViews.viewedAt') }} {{ formatDateTime(view.viewedAt) }}
                 </p>
               </RecipeCard>
@@ -151,14 +151,28 @@ const handleLogout = () => {
   logout()
 }
 
-const formatDate = (dateString: string) => {
-  const dateLocale = locale.value === 'en' ? enUS : fr
-  return format(new Date(dateString), 'd MMM yyyy', { locale: dateLocale })
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const dateLocale = locale.value === 'en' ? enUS : fr
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'd MMM yyyy', { locale: dateLocale })
+  } catch {
+    return ''
+  }
 }
 
-const formatDateTime = (dateString: string) => {
-  const dateLocale = locale.value === 'en' ? enUS : fr
-  return format(new Date(dateString), 'd MMM yyyy, HH:mm', { locale: dateLocale })
+const formatDateTime = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  try {
+    const dateLocale = locale.value === 'en' ? enUS : fr
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    return format(date, 'd MMM yyyy, HH:mm', { locale: dateLocale })
+  } catch {
+    return ''
+  }
 }
 
 const refreshHistory = async () => {
