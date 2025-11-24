@@ -75,7 +75,7 @@ export class RecipesService {
   }
 
   async findAll(query: RecipeQueryDto) {
-    const { search, dietTypes, difficulty, maxPrepTime, toolsRequired, tags, page = 1, limit = 20 } = query;
+    const { search, dietTypes, difficulty, maxPrepTime, toolsRequired, tags, page = 1, limit = 20, sortBy = 'createdAt' } = query;
 
     const where: any = {};
 
@@ -132,11 +132,50 @@ export class RecipesService {
 
     const skip = (page - 1) * limit;
 
-    const [recipes, total] = await Promise.all([
-      this.prisma.recipe.findMany({
+    // Handle sorting
+    let orderBy: any = { createdAt: 'desc' }; // Default
+    
+    if (sortBy === 'rating') {
+      // For rating sort, we need to calculate average rating
+      // We'll fetch all matching recipes first, calculate ratings, then sort and paginate
+      const allRecipes = await this.prisma.recipe.findMany({
         where,
-        skip,
-        take: limit,
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+        },
+      });
+
+      // Calculate average rating for each recipe
+      const recipesWithRating = allRecipes.map(recipe => {
+        const ratings = recipe.reviews.map(r => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+          : 0;
+        return {
+          ...recipe,
+          averageRating: avgRating,
+          reviewCount: ratings.length,
+        };
+      });
+
+      // Sort by average rating (descending)
+      recipesWithRating.sort((a, b) => b.averageRating - a.averageRating);
+
+      // Paginate
+      const total = recipesWithRating.length;
+      const paginatedRecipes = recipesWithRating.slice(skip, skip + limit);
+
+      // Fetch full recipe details for paginated results
+      const recipeIds = paginatedRecipes.map(r => r.id);
+      const recipes = await this.prisma.recipe.findMany({
+        where: {
+          ...where,
+          id: { in: recipeIds },
+        },
         include: {
           ingredients: {
             include: {
@@ -148,23 +187,98 @@ export class RecipesService {
               stepNumber: 'asc',
             },
           },
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.recipe.count({ where }),
-    ]);
+      });
 
-    return {
-      data: recipes,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      // Maintain sort order and add rating info
+      const sortedRecipes = recipeIds.map(id => {
+        const recipe = recipes.find(r => r.id === id);
+        if (!recipe) return null;
+        const ratings = recipe.reviews.map(r => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+          : null;
+        return {
+          ...recipe,
+          averageRating: avgRating,
+          reviewCount: ratings.length,
+        };
+      }).filter(Boolean);
+
+      return {
+        data: sortedRecipes,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } else {
+      // Standard sorting
+      if (sortBy === 'title') {
+        orderBy = { title: 'asc' };
+      } else {
+        orderBy = { createdAt: 'desc' };
+      }
+
+      const [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
+            steps: {
+              orderBy: {
+                stepNumber: 'asc',
+              },
+            },
+            reviews: {
+              select: {
+                rating: true,
+              },
+            },
+          },
+          orderBy,
+        }),
+        this.prisma.recipe.count({ where }),
+      ]);
+
+      // Calculate average rating for each recipe
+      const recipesWithRating = recipes.map(recipe => {
+        const ratings = recipe.reviews.map(r => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+          : null;
+        const reviewCount = ratings.length;
+        
+        return {
+          ...recipe,
+          averageRating: avgRating,
+          reviewCount,
+        };
+      });
+
+      return {
+        data: recipesWithRating,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
   }
 
   async findOne(id: string) {

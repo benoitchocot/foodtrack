@@ -27,8 +27,8 @@
         <div class="card">
           <div class="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-6 flex items-center justify-center relative overflow-hidden">
             <img 
-              v-if="adjustedRecipe.imageUrl" 
-              :src="adjustedRecipe.imageUrl" 
+              v-if="normalizedRecipeImageUrl" 
+              :src="normalizedRecipeImageUrl" 
               :alt="adjustedRecipe.title"
               class="w-full h-full object-cover absolute inset-0"
             />
@@ -76,6 +76,16 @@
               {{ translateTag(tag) }}
             </span>
           </div>
+
+          <div class="flex justify-end mt-6">
+            <NuxtLink
+              :to="`/recipes/submit?recipeId=${route.params.id}`"
+              class="btn btn-primary"
+            >
+              <Icon name="mdi:pencil" class="mr-2" />
+              {{ $t('recipes.edit.proposeEdit') }}
+            </NuxtLink>
+          </div>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
@@ -111,6 +121,161 @@
             </ol>
           </div>
         </div>
+
+        <!-- Reviews Section -->
+        <div class="card">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">{{ $t('reviews.title') }}</h2>
+          
+          <!-- Add Review Form -->
+          <div v-if="!userReview" class="mb-8 p-6 bg-gray-50 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">{{ $t('reviews.addReview') }}</h3>
+            <form @submit.prevent="handleSubmitReview" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ $t('reviews.rating') }} *
+                </label>
+                <div class="flex gap-1 items-center">
+                  <button
+                    v-for="star in 5"
+                    :key="star"
+                    type="button"
+                    @click="newReview.rating = star"
+                    @mouseenter="hoveredRating = star"
+                    @mouseleave="hoveredRating = 0"
+                    class="relative transition-all duration-150 cursor-pointer p-1"
+                  >
+                    <!-- Filled star (yellow) - shown when selected or hovered -->
+                    <Icon
+                      v-if="star <= (hoveredRating || newReview.rating)"
+                      name="mdi:star"
+                      :class="[
+                        'text-3xl absolute inset-0 transition-all duration-150',
+                        star <= newReview.rating ? 'text-yellow-400' : 'text-yellow-300'
+                      ]"
+                    />
+                    <!-- Outline star (white/gray) - always shown as background -->
+                    <Icon
+                      name="mdi:star-outline"
+                      :class="[
+                        'text-3xl relative transition-all duration-150',
+                        star <= (hoveredRating || newReview.rating) 
+                          ? 'text-yellow-400 opacity-0' 
+                          : 'text-gray-300'
+                      ]"
+                    />
+                  </button>
+                </div>  
+              </div>
+              
+              <div>
+                <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">
+                  {{ $t('reviews.comment') }} ({{ $t('reviews.optional') }})
+                </label>
+                <textarea
+                  id="comment"
+                  v-model="newReview.comment"
+                  rows="3"
+                  class="input"
+                  :placeholder="$t('reviews.commentPlaceholder')"
+                />
+              </div>
+              
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  :disabled="submittingReview || newReview.rating === 0"
+                  class="btn btn-primary"
+                >
+                  {{ submittingReview ? $t('reviews.submitting') : $t('reviews.submit') }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- User's Review -->
+          <div v-if="userReview" class="mb-8 p-6 bg-primary-50 rounded-lg">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-lg font-semibold">{{ $t('reviews.yourReview') }}</span>
+                  <div class="flex gap-0.5">
+                    <Icon
+                      v-for="star in 5"
+                      :key="star"
+                      :name="star <= userReview.rating ? 'mdi:star' : 'mdi:star-outline'"
+                      :class="[
+                        'text-xl',
+                        star <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'
+                      ]"
+                    />
+                  </div>
+                </div>
+                <p v-if="userReview.comment" class="text-gray-700">{{ userReview.comment }}</p>
+                <p v-else class="text-gray-500 italic">{{ $t('reviews.noComment') }}</p>
+                <p class="text-sm text-gray-500 mt-2">{{ $t('reviews.postedOn') }} {{ formatDate(userReview.createdAt) }}</p>
+              </div>
+              <button
+                @click="handleDeleteReview"
+                :disabled="deletingReview"
+                class="btn btn-secondary btn-sm"
+              >
+                {{ deletingReview ? $t('common.deleting') : $t('common.delete') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Reviews List -->
+          <div v-if="reviews.length > 0" class="space-y-4">
+            <div
+              v-for="review in reviews"
+              :key="review.id"
+              class="p-4 border border-gray-200 rounded-lg"
+            >
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span class="text-primary-700 font-semibold">
+                      {{ getUserInitial(review.user) }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">
+                      {{ getUserDisplayName(review.user) }}
+                    </p>
+                    <p class="text-sm text-gray-500">{{ formatDate(review.createdAt) }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex gap-0.5">
+                    <Icon
+                      v-for="star in 5"
+                      :key="star"
+                      :name="star <= review.rating ? 'mdi:star' : 'mdi:star-outline'"
+                      :class="[
+                        'text-lg',
+                        star <= review.rating ? 'text-yellow-400' : 'text-gray-300'
+                      ]"
+                    />
+                  </div>
+                  <button
+                    v-if="review.id !== userReview?.id"
+                    @click="handleReportReview(review.id)"
+                    :disabled="reportingReview === review.id"
+                    class="text-red-600 hover:text-red-700 text-sm"
+                    :title="$t('reviews.report')"
+                  >
+                    <Icon name="mdi:flag" />
+                  </button>
+                </div>
+              </div>
+              <p v-if="review.comment" class="text-gray-700 mt-2">{{ review.comment }}</p>
+            </div>
+          </div>
+
+          <div v-else class="text-center py-8 text-gray-500">
+            {{ $t('reviews.noReviews') }}
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -121,11 +286,23 @@ const route = useRoute()
 const { logout } = useAuth()
 const api = useApi()
 const { translateDifficulty, translateUnit, translateTag } = useTranslations()
+const { normalizeImageUrl } = useImageUrl()
 
 const recipe = ref<any>(null)
 const userSettings = ref<any>(null)
+const reviews = ref<any[]>([])
+const userReview = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
+const submittingReview = ref(false)
+const deletingReview = ref(false)
+const reportingReview = ref<string | null>(null)
+
+const newReview = ref({
+  rating: 0,
+  comment: '',
+})
+const hoveredRating = ref(0)
 
 const householdSize = computed(() => userSettings.value?.householdSize || 1)
 
@@ -151,6 +328,12 @@ const adjustedRecipe = computed(() => {
   }
 })
 
+// Normalize image URL to fix localhost issues
+const normalizedRecipeImageUrl = computed(() => {
+  if (!adjustedRecipe.value?.imageUrl) return null
+  return normalizeImageUrl(adjustedRecipe.value.imageUrl)
+})
+
 const handleLogout = () => {
   logout()
 }
@@ -162,6 +345,121 @@ const formatQuantity = (quantity: number) => {
   }
   // Show max 2 decimals
   return quantity.toFixed(2).replace(/\.?0+$/, '')
+}
+
+// Format date
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+// Get user display name
+const getUserDisplayName = (user: any) => {
+  if (user.firstName && user.lastName) {
+    return `${user.firstName} ${user.lastName}`
+  }
+  if (user.firstName) {
+    return user.firstName
+  }
+  // Fallback to email username (part before @)
+  return user.email.split('@')[0]
+}
+
+// Get user initial for avatar
+const getUserInitial = (user: any) => {
+  if (user.firstName) {
+    return user.firstName[0].toUpperCase()
+  }
+  if (user.lastName) {
+    return user.lastName[0].toUpperCase()
+  }
+  // Fallback to email first letter
+  return user.email[0].toUpperCase()
+}
+
+// Load reviews
+const loadReviews = async () => {
+  try {
+    const reviewsData = await api.get<any[]>(`/recipes/${route.params.id}/reviews`)
+    reviews.value = reviewsData
+    
+    // Find user's review
+    const { user } = useAuth()
+    if (user.value) {
+      userReview.value = reviewsData.find((r: any) => r.user.id === user.value?.id) || null
+    }
+  } catch (e: any) {
+    console.error('Failed to load reviews:', e)
+  }
+}
+
+// Submit review
+const handleSubmitReview = async () => {
+  if (newReview.value.rating === 0) return
+  
+  submittingReview.value = true
+  try {
+    const review = await api.post(`/recipes/${route.params.id}/reviews`, {
+      rating: newReview.value.rating,
+      comment: newReview.value.comment || undefined,
+    })
+    
+    // Show success notification
+    const { show } = useNotification()
+    show($t('reviews.submitSuccess'), 'success')
+    
+    // Reset form and reload reviews
+    newReview.value = { rating: 0, comment: '' }
+    await loadReviews()
+  } catch (e: any) {
+    error.value = e.message || $t('reviews.submitError')
+  } finally {
+    submittingReview.value = false
+  }
+}
+
+// Delete review
+const handleDeleteReview = async () => {
+  if (!userReview.value) return
+  
+  if (!confirm($t('reviews.deleteConfirm'))) return
+  
+  deletingReview.value = true
+  try {
+    await api.delete(`/recipes/${route.params.id}/reviews/${userReview.value.id}`)
+    
+    // Show success notification
+    const { show } = useNotification()
+    show($t('reviews.deleteSuccess'), 'success')
+    
+    // Reload reviews
+    await loadReviews()
+  } catch (e: any) {
+    error.value = e.message || $t('reviews.deleteError')
+  } finally {
+    deletingReview.value = false
+  }
+}
+
+// Report review
+const handleReportReview = async (reviewId: string) => {
+  if (!confirm($t('reviews.reportConfirm'))) return
+  
+  reportingReview.value = reviewId
+  try {
+    await api.post(`/recipes/${route.params.id}/reviews/${reviewId}/report`, {})
+    
+    // Show success notification
+    const { show } = useNotification()
+    show($t('reviews.reportSuccess'), 'success')
+  } catch (e: any) {
+    error.value = e.message || $t('reviews.reportError')
+  } finally {
+    reportingReview.value = null
+  }
 }
 
 onMounted(async () => {
@@ -176,9 +474,12 @@ onMounted(async () => {
     userSettings.value = settings
 
     // Record recipe view in history (fire and forget, don't wait for response)
-    api.post(`/history/recipes/${route.params.id}/view`).catch(() => {
+    api.post(`/history/recipes/${route.params.id}/view`, {}).catch(() => {
       // Silently fail if history recording fails
     })
+    
+    // Load reviews
+    await loadReviews()
   } catch (e: any) {
     error.value = e.message || $t('common.error')
   } finally {

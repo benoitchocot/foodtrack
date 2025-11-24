@@ -17,6 +17,16 @@ export class RecipeSubmissionsService {
     ) {}
 
     async submit(userId: string, submitDto: SubmitRecipeDto) {
+        // If recipeId is provided, verify the recipe exists
+        if (submitDto.recipeId) {
+            const recipe = await this.prisma.recipe.findUnique({
+                where: { id: submitDto.recipeId },
+            });
+            if (!recipe) {
+                throw new NotFoundException('Recipe not found');
+            }
+        }
+
         // Generate unique approval token
         const approvalToken = randomBytes(32).toString('hex');
 
@@ -26,6 +36,7 @@ export class RecipeSubmissionsService {
                 userId,
                 approvalToken,
                 status: RecipeSubmissionStatus.PENDING,
+                recipeId: submitDto.recipeId || null,
                 title: submitDto.title,
                 description: submitDto.description,
                 imageUrl: submitDto.imageUrl,
@@ -178,35 +189,69 @@ export class RecipeSubmissionsService {
             }
         }
 
-        // Create the recipe from submission
-        const recipe = await this.recipesService.create({
-            title: submission.title,
-            description: submission.description || undefined,
-            imageUrl: submission.imageUrl || undefined,
-            prepTime: submission.prepTime,
-            cookTime: submission.cookTime,
-            difficulty: submission.difficulty,
-            servings: submission.servings,
-            tags: submission.tags,
-            toolsRequired: submission.toolsRequired,
-            dietTypes: submission.dietTypes,
-            ingredients: submission.ingredients.map((subIng: any) => {
-                const ingredientId = ingredientMap.get(subIng.id);
-                if (!ingredientId) {
-                    throw new BadRequestException(`Ingredient not found for ${subIng.ingredientName}`);
-                }
-                return {
-                    ingredientId,
-                    quantity: Number(subIng.quantity),
-                    unit: subIng.unit,
-                    optional: subIng.optional,
-                };
-            }),
-            steps: submission.steps.map((step: any) => ({
-                stepNumber: step.stepNumber,
-                instruction: step.instruction,
-            })),
-        });
+        // If this is an edit submission, update the existing recipe; otherwise create a new one
+        let recipe;
+        if (submission.recipeId) {
+            // Update existing recipe
+            recipe = await this.recipesService.update(submission.recipeId, {
+                title: submission.title,
+                description: submission.description || undefined,
+                imageUrl: submission.imageUrl || undefined,
+                prepTime: submission.prepTime,
+                cookTime: submission.cookTime,
+                difficulty: submission.difficulty,
+                servings: submission.servings,
+                tags: submission.tags,
+                toolsRequired: submission.toolsRequired,
+                dietTypes: submission.dietTypes,
+                ingredients: submission.ingredients.map((subIng: any) => {
+                    const ingredientId = ingredientMap.get(subIng.id);
+                    if (!ingredientId) {
+                        throw new BadRequestException(`Ingredient not found for ${subIng.ingredientName}`);
+                    }
+                    return {
+                        ingredientId,
+                        quantity: Number(subIng.quantity),
+                        unit: subIng.unit,
+                        optional: subIng.optional,
+                    };
+                }),
+                steps: submission.steps.map((step: any) => ({
+                    stepNumber: step.stepNumber,
+                    instruction: step.instruction,
+                })),
+            });
+        } else {
+            // Create new recipe
+            recipe = await this.recipesService.create({
+                title: submission.title,
+                description: submission.description || undefined,
+                imageUrl: submission.imageUrl || undefined,
+                prepTime: submission.prepTime,
+                cookTime: submission.cookTime,
+                difficulty: submission.difficulty,
+                servings: submission.servings,
+                tags: submission.tags,
+                toolsRequired: submission.toolsRequired,
+                dietTypes: submission.dietTypes,
+                ingredients: submission.ingredients.map((subIng: any) => {
+                    const ingredientId = ingredientMap.get(subIng.id);
+                    if (!ingredientId) {
+                        throw new BadRequestException(`Ingredient not found for ${subIng.ingredientName}`);
+                    }
+                    return {
+                        ingredientId,
+                        quantity: Number(subIng.quantity),
+                        unit: subIng.unit,
+                        optional: subIng.optional,
+                    };
+                }),
+                steps: submission.steps.map((step: any) => ({
+                    stepNumber: step.stepNumber,
+                    instruction: step.instruction,
+                })),
+            });
+        }
 
         // Update submission status
         await this.prisma.recipeSubmission.update({

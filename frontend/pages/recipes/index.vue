@@ -16,7 +16,7 @@
         </div>
 
         <!-- Search bar -->
-        <div class="relative">
+        <div class="relative mb-4">
           <input
             v-model="searchQuery"
             type="text"
@@ -36,6 +36,48 @@
           >
             <Icon name="mdi:close-circle" class="text-xl" />
           </button>
+        </div>
+
+        <!-- Filters and Sort -->
+        <div class="mb-6 space-y-4">
+          <!-- Tags Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ $t('recipes.filterByTags') }}
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="tag in availableTags"
+                :key="tag.value"
+                type="button"
+                @click="toggleTag(tag.value)"
+                :class="[
+                  'px-3 py-1 rounded-full text-sm transition-colors',
+                  selectedTags.includes(tag.value)
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ]"
+              >
+                {{ tag.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Sort -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ $t('recipes.sortBy') }}
+            </label>
+            <select
+              v-model="sortBy"
+              @change="handleSortChange"
+              class="input max-w-xs"
+            >
+              <option value="createdAt">{{ $t('recipes.sortByCreatedAt') }}</option>
+              <option value="rating">{{ $t('recipes.sortByRating') }}</option>
+              <option value="title">{{ $t('recipes.sortByTitle') }}</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -85,6 +127,7 @@
 <script setup lang="ts">
 const api = useApi()
 const { loadFavorites } = useFavorites()
+const { t } = useI18n()
 
 const recipes = ref<any[]>([])
 const initialLoading = ref(true)
@@ -98,6 +141,46 @@ const hasMore = computed(() => currentPage.value < totalPages.value)
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 const searchQuery = ref('')
 const searchDebounceTimer = ref<NodeJS.Timeout | null>(null)
+const selectedTags = ref<string[]>([])
+const sortBy = ref<'createdAt' | 'rating' | 'title'>('createdAt')
+
+// Available tags (same as in submit.vue)
+const availableTags = computed(() => [
+  { value: 'quick', label: t('tags.quick') },
+  { value: 'batch_cooking', label: t('tags.batch_cooking') },
+  { value: 'one_pot', label: t('tags.one_pot') },
+  { value: 'italian', label: t('tags.italian') },
+  { value: 'comfort_food', label: t('tags.comfort_food') },
+  { value: 'vegetarian', label: t('tags.vegetarian') },
+  { value: 'healthy', label: t('tags.healthy') },
+  { value: 'french', label: t('tags.french') },
+  { value: 'sunday_roast', label: t('tags.sunday_roast') },
+  { value: 'family', label: t('tags.family') },
+  { value: 'soup', label: t('tags.soup') },
+  { value: 'spicy', label: t('tags.spicy') },
+  { value: 'indian', label: t('tags.indian') },
+  { value: 'fish', label: t('tags.fish') },
+  { value: 'classic', label: t('tags.classic') },
+])
+
+const toggleTag = (tag: string) => {
+  const index = selectedTags.value.indexOf(tag)
+  if (index > -1) {
+    selectedTags.value.splice(index, 1)
+  } else {
+    selectedTags.value.push(tag)
+  }
+  // Reload recipes when tags change
+  currentPage.value = 1
+  totalPages.value = 1
+  loadRecipes(1, false)
+}
+
+const handleSortChange = () => {
+  currentPage.value = 1
+  totalPages.value = 1
+  loadRecipes(1, false)
+}
 
 // Load recipes with pagination
 const loadRecipes = async (page: number = 1, append: boolean = false) => {
@@ -117,6 +200,18 @@ const loadRecipes = async (page: number = 1, append: boolean = false) => {
     // Add search parameter if provided
     if (searchQuery.value && searchQuery.value.trim()) {
       params.append('search', searchQuery.value.trim())
+    }
+
+    // Add tags filter if provided
+    if (selectedTags.value.length > 0) {
+      selectedTags.value.forEach(tag => {
+        params.append('tags', tag)
+      })
+    }
+
+    // Add sort parameter
+    if (sortBy.value) {
+      params.append('sortBy', sortBy.value)
     }
     
     const endpoint = `/recipes?${params.toString()}`

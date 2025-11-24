@@ -3,6 +3,7 @@ import {
     IsNotEmpty,
     IsEnum,
     IsInt,
+    IsNumber,
     Min,
     IsArray,
     ValidateNested,
@@ -18,7 +19,7 @@ class RecipeIngredientDto {
     @IsNotEmpty()
     ingredientId: string;
 
-    @IsInt()
+    @IsNumber()
     @Min(0)
     quantity: number;
 

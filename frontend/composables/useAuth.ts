@@ -1,7 +1,9 @@
 interface User {
     id: string
     email: string
-    name: string
+    name?: string // Legacy field, use firstName/lastName instead
+    firstName?: string
+    lastName?: string
     hasSeenTutorial?: boolean
 }
 

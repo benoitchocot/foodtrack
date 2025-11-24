@@ -44,4 +44,8 @@ export class RecipeQueryDto {
     @Min(1)
     @Type(() => Number)
     limit?: number = 20;
+
+    @IsOptional()
+    @IsString()
+    sortBy?: 'createdAt' | 'rating' | 'title';
 }

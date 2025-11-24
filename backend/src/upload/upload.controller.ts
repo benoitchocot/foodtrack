@@ -2,6 +2,7 @@ import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, BadRequestE
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as crypto from 'crypto';
@@ -9,6 +10,7 @@ import * as crypto from 'crypto';
 @ApiTags('upload')
 @Controller('upload')
 export class UploadController {
+    constructor(private configService: ConfigService) {}
     @UseGuards(JwtAuthGuard)
     @Post('image')
     @ApiBearerAuth('JWT-auth')
@@ -55,8 +57,14 @@ export class UploadController {
             throw new BadRequestException('No file uploaded');
         }
 
-        const baseUrl = process.env.BACKEND_URL || 'http://localhost:3000';
-        const imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
+        // Get the API URL from environment, with fallback
+        const apiUrl = this.configService.get('API_URL') 
+            || this.configService.get('BACKEND_URL')
+            || process.env.API_URL
+            || process.env.BACKEND_URL
+            || 'http://localhost:3000';
+        
+        const imageUrl = `${apiUrl}/uploads/images/${file.filename}`;
 
         return {
             url: imageUrl,

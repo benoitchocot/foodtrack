@@ -9,6 +9,7 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
+    "deleting": "Suppression...",
     "edit": "Modifier",
     "back": "Retour",
     "next": "Suivant",
@@ -72,6 +73,13 @@
     "allRecipesLoaded": "Toutes les recettes ont été chargées",
     "searchPlaceholder": "Rechercher une recette...",
     "clearSearch": "Effacer la recherche",
+    "filterByTags": "Filtrer par catégories",
+    "sortBy": "Trier par",
+    "sortByCreatedAt": "Date de création",
+    "sortByRating": "Note",
+    "sortByTitle": "Titre",
+    "noRating": "Aucune note",
+    "averageRating": "Note moyenne",
     "viewRecipe": "Voir la recette",
     "prepTime": "Temps de préparation",
     "cookTime": "Temps de cuisson",
@@ -89,6 +97,7 @@
     "addFavorite": "Ajouter aux favoris",
     "removeFavorite": "Retirer des favoris",
     "submitRecipe": "Partager sa recette",
+    "image": "Image",
     "submit": {
       "title": "Partager votre recette",
       "subtitle": "Remplissez le formulaire ci-dessous pour soumettre votre recette. Elle sera examinée avant d'être publiée.",
@@ -110,7 +119,43 @@
       "invalidImageType": "Type de fichier invalide. Seuls JPEG, PNG, GIF et WebP sont acceptés.",
       "imageTooLarge": "L'image est trop grande. Taille maximum : 5MB.",
       "uploadError": "Erreur lors du téléchargement de l'image"
+    },
+    "edit": {
+      "title": "Proposer une édition",
+      "subtitle": "Modifiez les informations ci-dessous pour proposer une édition de cette recette. Votre proposition sera examinée avant d'être appliquée.",
+      "submit": "Soumettre l'édition",
+      "submitting": "Envoi en cours...",
+      "proposeEdit": "Proposer une édition",
+      "loadError": "Erreur lors du chargement de la recette"
     }
+  },
+  "reviews": {
+    "title": "Avis",
+    "addReview": "Ajouter un avis",
+    "rating": "Note",
+    "comment": "Commentaire",
+    "optional": "Optionnel",
+    "commentPlaceholder": "Partagez votre expérience avec cette recette...",
+    "submit": "Publier l'avis",
+    "submitting": "Publication...",
+    "submitSuccess": "Votre avis a été publié avec succès !",
+    "submitError": "Erreur lors de la publication de l'avis",
+    "yourReview": "Votre avis",
+    "noComment": "Aucun commentaire",
+    "postedOn": "Publié le",
+    "noReviews": "Aucun avis pour le moment. Soyez le premier à laisser un avis !",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer votre avis ?",
+    "deleteSuccess": "Votre avis a été supprimé avec succès",
+    "deleteError": "Erreur lors de la suppression de l'avis",
+    "report": "Signaler",
+    "reportConfirm": "Êtes-vous sûr de vouloir signaler cet avis ?",
+    "reportSuccess": "L'avis a été signalé. Merci pour votre contribution.",
+    "reportError": "Erreur lors du signalement de l'avis",
+    "hovering": "(survol)",
+    "selected": "(sélectionné)",
+    "deleting": "Suppression en cours",
+    "deletedFromRecipe": "Avis supprimé de la recette",
+    "viewRecipe": "Voir la recette"
   },
   "approval": {
     "loading": "Chargement de la recette...",
@@ -275,7 +320,8 @@
     "oven": "Four",
     "microwave": "Micro-ondes",
     "blender": "Mixeur",
-    "casserole": "Casserole"
+    "casserole": "Casserole",
+    "title": "Équipements de cuisine"
   },
   "landing": {
     "hero": {

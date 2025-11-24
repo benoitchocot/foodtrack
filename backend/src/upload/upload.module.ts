@@ -6,3 +6,5 @@ import { UploadController } from './upload.controller';
 })
 export class UploadModule {}
 
+// Note: ConfigModule is global, so ConfigService is available everywhere
+

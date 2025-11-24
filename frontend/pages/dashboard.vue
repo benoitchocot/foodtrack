@@ -5,7 +5,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="mb-8">
         <h2 class="text-3xl font-bold text-gray-900 mb-2">
-          {{ $t('common.welcome') }}, {{ user?.name || $t('common.user') }}! 👋
+          {{ $t('common.welcome') }}, {{ getUserDisplayName() }}! 👋
         </h2>
         <p class="text-gray-600">{{ $t('dashboard.subtitle') }}</p>
       </div>
@@ -315,6 +315,20 @@ watch(() => router.currentRoute.value.path, async (newPath) => {
 
 const handleLogout = () => {
   logout()
+}
+
+const getUserDisplayName = () => {
+  if (!user.value) return $t('common.user')
+  if (user.value.firstName && user.value.lastName) {
+    return `${user.value.firstName} ${user.value.lastName}`
+  }
+  if (user.value.firstName) {
+    return user.value.firstName
+  }
+  if (user.value.name) {
+    return user.value.name
+  }
+  return user.value.email.split('@')[0] || $t('common.user')
 }
 
 const handleGuideDismiss = async () => {

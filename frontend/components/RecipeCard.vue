@@ -3,8 +3,8 @@
     <NuxtLink :to="`/recipes/${recipe.id}`" class="block">
       <div class="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
         <img 
-          v-if="recipe.imageUrl" 
-          :src="recipe.imageUrl" 
+          v-if="normalizedImageUrl" 
+          :src="normalizedImageUrl" 
           :alt="recipe.title"
           class="w-full h-full object-cover absolute inset-0"
           @error="onImageError"
@@ -13,7 +13,7 @@
       </div>
       <h3 :class="titleClass">{{ recipe.title }}</h3>
       <p v-if="recipe.description" :class="descriptionClass">{{ recipe.description }}</p>
-      <div class="flex items-center justify-between text-sm text-gray-500">
+      <div class="flex items-center justify-between text-sm text-gray-500 mb-2">
         <span class="flex items-center">
           <Icon name="mdi:clock-outline" class="mr-1" />
           {{ recipe.prepTime + recipe.cookTime }} {{ $t('recipes.min') }}
@@ -21,6 +21,19 @@
         <span class="px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
           {{ translateDifficulty(recipe.difficulty) }}
         </span>
+      </div>
+      <!-- Rating display -->
+      <div v-if="recipe.averageRating !== null && recipe.averageRating !== undefined" class="flex items-center gap-1 text-sm">
+        <div class="flex items-center">
+          <Icon name="mdi:star" class="text-yellow-400 mr-1" />
+          <span class="font-semibold">{{ recipe.averageRating.toFixed(1) }}</span>
+        </div>
+        <span class="text-gray-500 text-xs">
+          ({{ recipe.reviewCount || 0 }})
+        </span>
+      </div>
+      <div v-else class="text-sm text-gray-400">
+        {{ $t('recipes.noRating') }}
       </div>
       <slot />
     </NuxtLink>
@@ -43,9 +56,12 @@ interface Props {
     id: string
     title: string
     description?: string
+    imageUrl?: string | null
     prepTime: number
     cookTime: number
     difficulty: string
+    averageRating?: number | null
+    reviewCount?: number
   }
   size?: 'default' | 'small'
 }
@@ -56,9 +72,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { translateDifficulty } = useTranslations()
 const { isFavorite, toggleFavorite } = useFavorites()
+const { normalizeImageUrl } = useImageUrl()
 
 const isFav = computed(() => isFavorite(props.recipe.id))
 const imageError = ref(false)
+const normalizedImageUrl = computed(() => normalizeImageUrl(props.recipe.imageUrl))
 
 const onImageError = () => {
   imageError.value = true

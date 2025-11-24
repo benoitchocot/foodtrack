@@ -92,6 +92,8 @@ model User {
   recipeViews        RecipeView[]
   favorites          Favorite[]
   recipeSubmissions  RecipeSubmission[]
+  reviews            RecipeReview[]
+  reviewReports      ReviewReport[]
 
   @@map("users")
 }
@@ -139,6 +141,8 @@ model Recipe {
   mealPlanRecipes MealPlanRecipe[]
   views           RecipeView[]
   favorites       Favorite[]
+  editSubmissions RecipeSubmission[]
+  reviews         RecipeReview[]
 
   @@index([difficulty])
   @@index([prepTime])
@@ -150,6 +154,7 @@ model RecipeSubmission {
   userId        String                  @map("user_id")
   status        RecipeSubmissionStatus  @default(PENDING)
   approvalToken String                  @unique @map("approval_token")
+  recipeId      String?                 @map("recipe_id") // For edit submissions
   
   // Recipe data (same structure as Recipe)
   title         String
@@ -170,12 +175,14 @@ model RecipeSubmission {
   
   // Relations
   user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe        Recipe?                 @relation(fields: [recipeId], references: [id], onDelete: SetNull)
   ingredients   RecipeSubmissionIngredient[]
   steps         RecipeSubmissionStep[]
   
   @@index([userId])
   @@index([status])
   @@index([approvalToken])
+  @@index([recipeId])
   @@map("recipe_submissions")
 }
 
@@ -355,4 +362,41 @@ model Favorite {
   @@index([userId])
   @@index([recipeId])
   @@map("favorites")
+}
+
+model RecipeReview {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  rating    Int      // 1-5 stars
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe  Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  reports ReviewReport[]
+
+  @@unique([userId, recipeId]) // One review per user per recipe
+  @@index([userId])
+  @@index([recipeId])
+  @@index([rating])
+  @@map("recipe_reviews")
+}
+
+model ReviewReport {
+  id            String    @id @default(uuid())
+  reviewId      String    @map("review_id")
+  userId        String    @map("user_id") // User who reported
+  deletionToken String?   @unique @map("deletion_token") // Token for admin deletion (nullable for existing records)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  review RecipeReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId]) // One report per user per review
+  @@index([reviewId])
+  @@index([userId])
+  @@index([deletionToken])
+  @@map("review_reports")
 }

@@ -8,7 +8,7 @@ import { RecipesModule } from '../recipes/recipes.module';
     imports: [RecipesModule],
     controllers: [RecipeSubmissionsController],
     providers: [RecipeSubmissionsService, EmailService],
-    exports: [RecipeSubmissionsService],
+    exports: [RecipeSubmissionsService, EmailService],
 })
 export class RecipeSubmissionsModule {}
 

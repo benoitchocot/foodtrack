@@ -4,8 +4,12 @@
 
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('recipes.submit.title') }}</h2>
-        <p class="text-gray-600">{{ $t('recipes.submit.subtitle') }}</p>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">
+          {{ isEditMode ? $t('recipes.edit.title') : $t('recipes.submit.title') }}
+        </h2>
+        <p class="text-gray-600">
+          {{ isEditMode ? $t('recipes.edit.subtitle') : $t('recipes.submit.subtitle') }}
+        </p>
       </div>
 
       <form @submit.prevent="handleSubmit" class="space-y-8">
@@ -374,7 +378,7 @@
             :disabled="loading || !canSubmit"
             class="btn btn-primary"
           >
-            {{ loading ? $t('recipes.submit.submitting') : $t('recipes.submit.submit') }}
+            {{ loading ? (isEditMode ? $t('recipes.edit.submitting') : $t('recipes.submit.submitting')) : (isEditMode ? $t('recipes.edit.submit') : $t('recipes.submit.submit')) }}
           </button>
         </div>
 
@@ -387,6 +391,7 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
 const api = useApi()
 const router = useRouter()
 const { t } = useI18n()
@@ -398,7 +403,9 @@ const ingredients = ref<any[]>([])
 const imageInput = ref<HTMLInputElement | null>(null)
 const imagePreview = ref<string | null>(null)
 const uploadedImageUrl = ref<string | null>(null)
-const imageMode = ref<'upload' | 'url'>('upload')
+const imageMode = ref<'upload' | 'url'>('url')
+const recipeId = ref<string | null>(null)
+const isEditMode = computed(() => !!recipeId.value)
 const units = ref([
   { value: 'G', label: translateUnit('G') },
   { value: 'KG', label: translateUnit('KG') },
@@ -656,6 +663,11 @@ const handleSubmit = async () => {
       ingredients: ingredientsWithIds,
     }
 
+    // Include recipeId if in edit mode
+    if (recipeId.value) {
+      payload.recipeId = recipeId.value
+    }
+
     await api.post('/recipe-submissions', payload)
     
     // Show success notification and redirect
@@ -673,7 +685,53 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
+    // Load ingredients
     ingredients.value = await api.get('/ingredients')
+
+    // Check if we're in edit mode (recipeId in query params)
+    const recipeIdParam = route.query.recipeId as string | undefined
+    if (recipeIdParam) {
+      recipeId.value = recipeIdParam
+      
+      // Load recipe data to pre-fill form
+      try {
+        const recipe = await api.get(`/recipes/${recipeIdParam}`)
+        
+        // Pre-fill form data
+        formData.value.title = recipe.title
+        formData.value.description = recipe.description || ''
+        formData.value.imageUrl = recipe.imageUrl || ''
+        formData.value.prepTime = recipe.prepTime
+        formData.value.cookTime = recipe.cookTime
+        formData.value.servings = recipe.servings
+        formData.value.difficulty = recipe.difficulty
+        formData.value.tags = recipe.tags || []
+        formData.value.toolsRequired = recipe.toolsRequired || []
+        formData.value.dietTypes = recipe.dietTypes || []
+        
+        // Pre-fill ingredients
+        formData.value.ingredients = recipe.ingredients.map((ing: any) => ({
+          ingredientName: ing.ingredient.name,
+          quantity: Number(ing.quantity),
+          unit: ing.unit,
+        }))
+        
+        // Pre-fill steps
+        formData.value.steps = recipe.steps
+          .sort((a: any, b: any) => a.stepNumber - b.stepNumber)
+          .map((step: any) => ({
+            stepNumber: step.stepNumber,
+            instruction: step.instruction,
+          }))
+        
+        // Set image mode based on whether imageUrl exists
+        if (recipe.imageUrl) {
+          imageMode.value = 'url'
+        }
+      } catch (e: any) {
+        error.value = e.message || t('recipes.edit.loadError')
+      }
+    }
   } catch (e: any) {
     console.error('Failed to load ingredients:', e)
   }

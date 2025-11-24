@@ -3,6 +3,7 @@ import {
     IsNotEmpty,
     IsEnum,
     IsInt,
+    IsNumber,
     Min,
     IsArray,
     ValidateNested,
@@ -21,7 +22,7 @@ class RecipeSubmissionIngredientDto {
     @IsNotEmpty()
     ingredientName: string; // Name of ingredient (used if ingredientId is not provided)
 
-    @IsInt()
+    @IsNumber()
     @Min(0)
     quantity: number;
 
@@ -43,6 +44,10 @@ class RecipeSubmissionStepDto {
 }
 
 export class SubmitRecipeDto {
+    @IsString()
+    @IsOptional()
+    recipeId?: string; // For edit submissions
+
     @IsString()
     @IsNotEmpty()
     title: string;
