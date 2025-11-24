@@ -107,15 +107,17 @@
               </h3>
               <div class="space-y-2">
                 <div
-                  v-for="item in groupedItems[category.value]"
+                  v-for="item in sortedItems(category.value)"
                   :key="item.id"
-                  class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  @click="toggleItem(item.id, !item.checked)"
+                  class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     :checked="item.checked"
+                    @click.stop
                     @change="toggleItem(item.id, ($event.target as HTMLInputElement).checked)"
-                    class="w-5 h-5 text-primary-600 rounded"
+                    class="w-5 h-5 text-primary-600 rounded pointer-events-none"
                   />
                   <div class="flex-1">
                     <div class="flex items-center justify-between">
@@ -228,6 +230,19 @@ const totalItemsCount = computed(() => {
   })
   return count
 })
+
+// Sort items: unchecked first, then checked
+const sortedItems = (category: string) => {
+  const items = groupedItems.value[category] || []
+  return [...items].sort((a, b) => {
+    // Unchecked items first (false comes before true)
+    if (a.checked !== b.checked) {
+      return a.checked ? 1 : -1
+    }
+    // If both have same checked status, maintain original order
+    return 0
+  })
+}
 
 const toggleItem = async (itemId: string, checked: boolean) => {
   try {

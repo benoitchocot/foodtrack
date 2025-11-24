@@ -339,10 +339,23 @@
             <div
               v-for="(step, index) in formData.steps"
               :key="index"
-              class="flex gap-4"
+              :draggable="true"
+              @dragstart="handleDragStart(index, $event)"
+              @dragover.prevent="handleDragOver(index, $event)"
+              @drop="handleDrop(index, $event)"
+              @dragenter.prevent
+              @dragend="draggedIndex = null"
+              class="flex gap-4 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all cursor-move group"
+              :class="{ 
+                'border-primary-400 bg-primary-100 opacity-50': draggedIndex === index,
+                'border-primary-500 bg-primary-100': draggedOverIndex === index && draggedIndex !== null && draggedIndex !== index
+              }"
             >
-              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold">
-                {{ step.stepNumber }}
+              <div class="flex-shrink-0 flex items-center gap-2">
+                <Icon name="mdi:drag-vertical" class="text-gray-400 cursor-grab active:cursor-grabbing group-hover:text-primary-600 transition-colors" />
+                <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold">
+                  {{ step.stepNumber }}
+                </div>
               </div>
               <div class="flex-1">
                 <textarea
@@ -351,11 +364,12 @@
                   required
                   class="input"
                   :placeholder="$t('recipes.instructions')"
+                  @click.stop
                 />
               </div>
               <button
                 type="button"
-                @click="removeStep(index)"
+                @click.stop="removeStep(index)"
                 class="btn btn-secondary"
               >
                 <Icon name="mdi:delete" />
@@ -544,6 +558,54 @@ const removeStep = (index: number) => {
   formData.value.steps.forEach((step, i) => {
     step.stepNumber = i + 1
   })
+}
+
+// Drag & Drop for steps
+const draggedIndex = ref<number | null>(null)
+const draggedOverIndex = ref<number | null>(null)
+
+const handleDragStart = (index: number, event: DragEvent) => {
+  draggedIndex.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/html', index.toString())
+  }
+}
+
+const handleDragOver = (index: number, event: DragEvent) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    draggedOverIndex.value = index
+  }
+}
+
+const handleDrop = (targetIndex: number, event: DragEvent) => {
+  event.preventDefault()
+  const sourceIndex = draggedIndex.value
+  
+  if (sourceIndex === null || sourceIndex === targetIndex) {
+    draggedIndex.value = null
+    draggedOverIndex.value = null
+    return
+  }
+
+  // Move the step
+  const steps = [...formData.value.steps]
+  const [movedStep] = steps.splice(sourceIndex, 1)
+  steps.splice(targetIndex, 0, movedStep)
+
+  // Update formData
+  formData.value.steps = steps
+
+  // Renumber steps
+  formData.value.steps.forEach((step, i) => {
+    step.stepNumber = i + 1
+  })
+
+  draggedIndex.value = null
+  draggedOverIndex.value = null
 }
 
 const handleImageUpload = async (event: Event) => {
