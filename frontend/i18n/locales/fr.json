@@ -119,7 +119,14 @@
       "imageHint": "Formats acceptés : JPEG, PNG, GIF, WebP (max 5MB)",
       "invalidImageType": "Type de fichier invalide. Seuls JPEG, PNG, GIF et WebP sont acceptés.",
       "imageTooLarge": "L'image est trop grande. Taille maximum : 5MB.",
-      "uploadError": "Erreur lors du téléchargement de l'image"
+        "uploadError": "Erreur lors du téléchargement de l'image",
+      "nutritionalValues": "Valeurs nutritionnelles",
+      "nutritionalValuesDescription": "Valeurs nutritionnelles par portion (optionnel)",
+      "calories": "Calories (kcal)",
+      "carbohydrates": "Glucides (g)",
+      "fats": "Lipides (g)",
+      "proteins": "Protéines (g)",
+      "fibers": "Fibres (g)"
     },
     "edit": {
       "title": "Proposer une édition",
@@ -272,6 +279,7 @@
       "SLICE": "tranche"
     },
     "dietType": {
+      "title": "Contraintes alimentaires",
       "VEGETARIAN": "Végétarien",
       "VEGAN": "Végan",
       "HALAL": "Halal",

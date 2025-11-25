@@ -44,6 +44,11 @@ export class RecipesService {
         tags: createRecipeDto.tags || [],
         toolsRequired: createRecipeDto.toolsRequired || [],
         dietTypes: createRecipeDto.dietTypes || [],
+        calories: createRecipeDto.calories ?? null,
+        carbohydrates: createRecipeDto.carbohydrates ?? null,
+        fats: createRecipeDto.fats ?? null,
+        proteins: createRecipeDto.proteins ?? null,
+        fibers: createRecipeDto.fibers ?? null,
         ingredients: {
           create: createRecipeDto.ingredients.map((ing) => ({
             ingredientId: ing.ingredientId,
@@ -344,7 +349,19 @@ export class RecipesService {
       tags: updateRecipeDto.tags,
       toolsRequired: updateRecipeDto.toolsRequired,
       dietTypes: updateRecipeDto.dietTypes,
+      calories: updateRecipeDto.calories !== undefined ? updateRecipeDto.calories : undefined,
+      carbohydrates: updateRecipeDto.carbohydrates !== undefined ? updateRecipeDto.carbohydrates : undefined,
+      fats: updateRecipeDto.fats !== undefined ? updateRecipeDto.fats : undefined,
+      proteins: updateRecipeDto.proteins !== undefined ? updateRecipeDto.proteins : undefined,
+      fibers: updateRecipeDto.fibers !== undefined ? updateRecipeDto.fibers : undefined,
     };
+    
+    // Remove undefined values to avoid overwriting with undefined
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
     // Update slug if title changed
     if (updateRecipeDto.title) {

@@ -118,7 +118,14 @@
       "imageHint": "Accepted formats: JPEG, PNG, GIF, WebP (max 5MB)",
       "invalidImageType": "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.",
       "imageTooLarge": "Image is too large. Maximum size: 5MB.",
-      "uploadError": "Error uploading image"
+      "uploadError": "Error uploading image",
+      "nutritionalValues": "Nutritional values",
+      "nutritionalValuesDescription": "Nutritional values per serving (optional)",
+      "calories": "Calories (kcal)",
+      "carbohydrates": "Carbohydrates (g)",
+      "fats": "Fats (g)",
+      "proteins": "Proteins (g)",
+      "fibers": "Fibers (g)"
     },
     "edit": {
       "title": "Propose an edit",

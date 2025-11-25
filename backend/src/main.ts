@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { DecimalInterceptor } from './common/interceptors/decimal.interceptor';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -16,6 +17,9 @@ async function bootstrap() {
             transform: true,
         }),
     );
+
+    // Convert Prisma Decimal to number in all responses
+    app.useGlobalInterceptors(new DecimalInterceptor());
 
     // Enable CORS
     app.enableCors({

@@ -77,38 +77,38 @@ enum RecipeSubmissionStatus {
 // ============================================
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  firstName    String?   @map("first_name")
-  lastName     String?   @map("last_name")
-  hasSeenTutorial Boolean @default(false) @map("has_seen_tutorial")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String   @map("password_hash")
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  hasSeenTutorial Boolean  @default(false) @map("has_seen_tutorial")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  settings           UserSettings?
-  mealPlans          MealPlan[]
-  shoppingLists      ShoppingList[]
-  recipeViews        RecipeView[]
-  favorites          Favorite[]
-  recipeSubmissions  RecipeSubmission[]
-  reviews            RecipeReview[]
-  reviewReports      ReviewReport[]
+  settings          UserSettings?
+  mealPlans         MealPlan[]
+  shoppingLists     ShoppingList[]
+  recipeViews       RecipeView[]
+  favorites         Favorite[]
+  recipeSubmissions RecipeSubmission[]
+  reviews           RecipeReview[]
+  reviewReports     ReviewReport[]
 
   @@map("users")
 }
 
 model UserSettings {
-  id                   String     @id @default(uuid())
-  userId               String     @unique @map("user_id")
-  householdSize        Int        @default(2) @map("household_size")
-  defaultMealsPerWeek  Int        @default(5) @map("default_meals_per_week")
-  dietPreferences      DietType[] @map("diet_preferences")
-  toolsAvailable       String[]   @map("tools_available") // ["oven", "microwave", "blender"]
+  id                   String      @id @default(uuid())
+  userId               String      @unique @map("user_id")
+  householdSize        Int         @default(2) @map("household_size")
+  defaultMealsPerWeek  Int         @default(5) @map("default_meals_per_week")
+  dietPreferences      DietType[]  @map("diet_preferences")
+  toolsAvailable       String[]    @map("tools_available") // ["oven", "microwave", "blender"]
   difficultyPreference Difficulty? @map("difficulty_preference")
-  maxPrepTime          Int?       @map("max_prep_time") // in minutes
-  createdAt            DateTime   @default(now()) @map("created_at")
-  updatedAt            DateTime   @updatedAt @map("updated_at")
+  maxPrepTime          Int?        @map("max_prep_time") // in minutes
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -130,9 +130,15 @@ model Recipe {
   difficulty    Difficulty
   servings      Int        @default(1) // Number of servings the recipe is designed for
   isAdaptable   Boolean    @default(true) @map("is_adaptable") // If false, quantities are fixed (e.g., tarts, cakes)
-  tags          String[]   // ["quick", "batch_cooking", "one_pot"]
+  tags          String[] // ["quick", "batch_cooking", "one_pot"]
   toolsRequired String[]   @map("tools_required") // ["oven", "blender"]
   dietTypes     DietType[] @map("diet_types")
+  // Nutritional values (per serving, nullable)
+  calories      Int? // Total calories per serving
+  carbohydrates Decimal?   @db.Decimal(10, 2) // Grams of carbohydrates per serving
+  fats          Decimal?   @db.Decimal(10, 2) // Grams of fats per serving
+  proteins      Decimal?   @db.Decimal(10, 2) // Grams of proteins per serving
+  fibers        Decimal?   @db.Decimal(10, 2) // Grams of fibers per serving
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
@@ -150,35 +156,41 @@ model Recipe {
 }
 
 model RecipeSubmission {
-  id            String                  @id @default(uuid())
-  userId        String                  @map("user_id")
-  status        RecipeSubmissionStatus  @default(PENDING)
-  approvalToken String                  @unique @map("approval_token")
-  recipeId      String?                 @map("recipe_id") // For edit submissions
-  
+  id            String                 @id @default(uuid())
+  userId        String                 @map("user_id")
+  status        RecipeSubmissionStatus @default(PENDING)
+  approvalToken String                 @unique @map("approval_token")
+  recipeId      String?                @map("recipe_id") // For edit submissions
+
   // Recipe data (same structure as Recipe)
   title         String
-  description   String?                 @db.Text
-  imageUrl      String?                 @map("image_url")
-  prepTime      Int                     @map("prep_time")
-  cookTime      Int                     @map("cook_time")
+  description   String?    @db.Text
+  imageUrl      String?    @map("image_url")
+  prepTime      Int        @map("prep_time")
+  cookTime      Int        @map("cook_time")
   difficulty    Difficulty
-  servings      Int                     @default(1)
+  servings      Int        @default(1)
   tags          String[]
-  toolsRequired String[]                @map("tools_required")
-  dietTypes     DietType[]              @map("diet_types")
-  
+  toolsRequired String[]   @map("tools_required")
+  dietTypes     DietType[] @map("diet_types")
+  // Nutritional values (per serving, nullable)
+  calories      Int?
+  carbohydrates Decimal?   @db.Decimal(10, 2)
+  fats          Decimal?   @db.Decimal(10, 2)
+  proteins      Decimal?   @db.Decimal(10, 2)
+  fibers        Decimal?   @db.Decimal(10, 2)
+
   // Submission metadata
-  submittedAt   DateTime                @default(now()) @map("submitted_at")
-  reviewedAt    DateTime?               @map("reviewed_at")
-  rejectionReason String?               @db.Text @map("rejection_reason")
-  
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+  rejectionReason String?   @map("rejection_reason") @db.Text
+
   // Relations
-  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe        Recipe?                 @relation(fields: [recipeId], references: [id], onDelete: SetNull)
-  ingredients   RecipeSubmissionIngredient[]
-  steps         RecipeSubmissionStep[]
-  
+  user        User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe      Recipe?                      @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  ingredients RecipeSubmissionIngredient[]
+  steps       RecipeSubmissionStep[]
+
   @@index([userId])
   @@index([status])
   @@index([approvalToken])
@@ -187,29 +199,29 @@ model RecipeSubmission {
 }
 
 model RecipeSubmissionIngredient {
-  id                String            @id @default(uuid())
-  submissionId      String            @map("submission_id")
-  ingredientId      String?           @map("ingredient_id") // Can be null if ingredient doesn't exist yet
-  ingredientName    String            @map("ingredient_name") // Fallback if ingredient doesn't exist
-  quantity          Decimal           @db.Decimal(10, 2)
-  unit              Unit
-  optional          Boolean           @default(false)
-  
-  submission        RecipeSubmission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  ingredient        Ingredient?       @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
-  
+  id             String  @id @default(uuid())
+  submissionId   String  @map("submission_id")
+  ingredientId   String? @map("ingredient_id") // Can be null if ingredient doesn't exist yet
+  ingredientName String  @map("ingredient_name") // Fallback if ingredient doesn't exist
+  quantity       Decimal @db.Decimal(10, 2)
+  unit           Unit
+  optional       Boolean @default(false)
+
+  submission RecipeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  ingredient Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+
   @@map("recipe_submission_ingredients")
 }
 
 model RecipeSubmissionStep {
-  id          String            @id @default(uuid())
-  submissionId String           @map("submission_id")
-  stepNumber  Int               @map("step_number")
-  instruction String            @db.Text
-  createdAt   DateTime          @default(now()) @map("created_at")
-  
-  submission  RecipeSubmission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  stepNumber   Int      @map("step_number")
+  instruction  String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  submission RecipeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
   @@unique([submissionId, stepNumber])
   @@map("recipe_submission_steps")
 }
@@ -235,9 +247,9 @@ model Ingredient {
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
-  recipeIngredients            RecipeIngredient[]
-  shoppingListItems            ShoppingListItem[]
-  recipeSubmissionIngredients  RecipeSubmissionIngredient[]
+  recipeIngredients           RecipeIngredient[]
+  shoppingListItems           ShoppingListItem[]
+  recipeSubmissionIngredients RecipeSubmissionIngredient[]
 
   @@index([category])
   @@map("ingredients")
@@ -269,9 +281,9 @@ model MealPlan {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipes         MealPlanRecipe[]
-  shoppingLists   ShoppingList[]
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipes       MealPlanRecipe[]
+  shoppingLists ShoppingList[]
 
   @@index([userId])
   @@map("meal_plans")
@@ -297,13 +309,13 @@ model MealPlanRecipe {
 // ============================================
 
 model ShoppingList {
-  id         String              @id @default(uuid())
-  userId     String              @map("user_id")
-  mealPlanId String?             @map("meal_plan_id")
+  id         String             @id @default(uuid())
+  userId     String             @map("user_id")
+  mealPlanId String?            @map("meal_plan_id")
   title      String
-  status     ShoppingListStatus  @default(DRAFT)
-  createdAt  DateTime            @default(now()) @map("created_at")
-  updatedAt  DateTime            @updatedAt @map("updated_at")
+  status     ShoppingListStatus @default(DRAFT)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   mealPlan MealPlan?          @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
@@ -314,17 +326,17 @@ model ShoppingList {
 }
 
 model ShoppingListItem {
-  id              String   @id @default(uuid())
-  shoppingListId  String   @map("shopping_list_id")
-  ingredientId    String   @map("ingredient_id")
-  quantity        Decimal  @db.Decimal(10, 2)
-  unit            Unit
-  checked         Boolean  @default(false)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  shoppingListId String   @map("shopping_list_id")
+  ingredientId   String   @map("ingredient_id")
+  quantity       Decimal  @db.Decimal(10, 2)
+  unit           Unit
+  checked        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  shoppingList   ShoppingList   @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  ingredient     Ingredient     @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  shoppingList ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
   @@unique([shoppingListId, ingredientId])
   @@map("shopping_list_items")
@@ -335,10 +347,10 @@ model ShoppingListItem {
 // ============================================
 
 model RecipeView {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  recipeId  String   @map("recipe_id")
-  viewedAt  DateTime @default(now()) @map("viewed_at")
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  recipeId String   @map("recipe_id")
+  viewedAt DateTime @default(now()) @map("viewed_at")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -368,13 +380,13 @@ model RecipeReview {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   recipeId  String   @map("recipe_id")
-  rating    Int      // 1-5 stars
+  rating    Int // 1-5 stars
   comment   String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe  Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe  Recipe         @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   reports ReviewReport[]
 
   @@unique([userId, recipeId]) // One review per user per recipe
@@ -385,14 +397,14 @@ model RecipeReview {
 }
 
 model ReviewReport {
-  id            String    @id @default(uuid())
-  reviewId      String    @map("review_id")
-  userId        String    @map("user_id") // User who reported
-  deletionToken String?   @unique @map("deletion_token") // Token for admin deletion (nullable for existing records)
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  reviewId      String   @map("review_id")
+  userId        String   @map("user_id") // User who reported
+  deletionToken String?  @unique @map("deletion_token") // Token for admin deletion (nullable for existing records)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   review RecipeReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([reviewId, userId]) // One report per user per review
   @@index([reviewId])

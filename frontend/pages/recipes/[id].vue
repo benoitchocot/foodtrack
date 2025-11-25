@@ -77,6 +77,38 @@
             </span>
           </div>
 
+          <!-- Nutritional Values -->
+          <div v-if="hasNutritionalValues" class="mb-6 pt-6 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('recipes.submit.nutritionalValues') }} ({{ $t('recipes.servings') }}: {{ adjustedRecipe.servings }})</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div v-if="adjustedRecipe.calories" class="text-center p-4 bg-green-50 rounded-lg">
+                <Icon name="mdi:fire" class="text-2xl text-green-600 mb-2 mx-auto" />
+                <p class="text-xs text-gray-600 mb-1">{{ $t('recipes.submit.calories') }}</p>
+                <p class="text-xl font-semibold text-green-700">{{ adjustedRecipe.calories }} <span class="text-sm">kcal</span></p>
+              </div>
+              <div v-if="adjustedRecipe.carbohydrates" class="text-center p-4 bg-blue-50 rounded-lg">
+                <Icon name="mdi:grain" class="text-2xl text-blue-600 mb-2 mx-auto" />
+                <p class="text-xs text-gray-600 mb-1">{{ $t('recipes.submit.carbohydrates') }}</p>
+                <p class="text-xl font-semibold text-blue-700">{{ formatDecimal(adjustedRecipe.carbohydrates) }} <span class="text-sm">g</span></p>
+              </div>
+              <div v-if="adjustedRecipe.fats" class="text-center p-4 bg-yellow-50 rounded-lg">
+                <Icon name="mdi:oil" class="text-2xl text-yellow-600 mb-2 mx-auto" />
+                <p class="text-xs text-gray-600 mb-1">{{ $t('recipes.submit.fats') }}</p>
+                <p class="text-xl font-semibold text-yellow-700">{{ formatDecimal(adjustedRecipe.fats) }} <span class="text-sm">g</span></p>
+              </div>
+              <div v-if="adjustedRecipe.proteins" class="text-center p-4 bg-red-50 rounded-lg">
+                <Icon name="mdi:food-drumstick" class="text-2xl text-red-600 mb-2 mx-auto" />
+                <p class="text-xs text-gray-600 mb-1">{{ $t('recipes.submit.proteins') }}</p>
+                <p class="text-xl font-semibold text-red-700">{{ formatDecimal(adjustedRecipe.proteins) }} <span class="text-sm">g</span></p>
+              </div>
+              <div v-if="adjustedRecipe.fibers" class="text-center p-4 bg-purple-50 rounded-lg">
+                <Icon name="mdi:leaf" class="text-2xl text-purple-600 mb-2 mx-auto" />
+                <p class="text-xs text-gray-600 mb-1">{{ $t('recipes.submit.fibers') }}</p>
+                <p class="text-xl font-semibold text-purple-700">{{ formatDecimal(adjustedRecipe.fibers) }} <span class="text-sm">g</span></p>
+              </div>
+            </div>
+          </div>
+
           <div class="flex justify-end mt-6">
             <NuxtLink
               :to="`/recipes/submit?recipeId=${route.params.id}`"
@@ -325,6 +357,12 @@ const adjustedRecipe = computed(() => {
       ...ing,
       quantity: Number(ing.quantity) * ratio,
     })),
+    // Nutritional values are already per serving, so we need to multiply by ratio
+    calories: recipe.value.calories ? Math.round(recipe.value.calories * ratio) : null,
+    carbohydrates: recipe.value.carbohydrates ? Number(recipe.value.carbohydrates) * ratio : null,
+    fats: recipe.value.fats ? Number(recipe.value.fats) * ratio : null,
+    proteins: recipe.value.proteins ? Number(recipe.value.proteins) * ratio : null,
+    fibers: recipe.value.fibers ? Number(recipe.value.fibers) * ratio : null,
   }
 })
 
@@ -346,6 +384,27 @@ const formatQuantity = (quantity: number) => {
   // Show max 2 decimals
   return quantity.toFixed(2).replace(/\.?0+$/, '')
 }
+
+// Format decimal values (for nutritional values)
+const formatDecimal = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined) return ''
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) return ''
+  // Show max 2 decimals, remove trailing zeros
+  return num.toFixed(2).replace(/\.?0+$/, '')
+}
+
+// Check if recipe has nutritional values
+const hasNutritionalValues = computed(() => {
+  if (!adjustedRecipe.value) return false
+  return !!(
+    adjustedRecipe.value.calories ||
+    adjustedRecipe.value.carbohydrates ||
+    adjustedRecipe.value.fats ||
+    adjustedRecipe.value.proteins ||
+    adjustedRecipe.value.fibers
+  )
+})
 
 // Format date
 const formatDate = (date: string) => {
@@ -469,6 +528,12 @@ onMounted(async () => {
       api.get(`/recipes/${route.params.id}`),
       api.get('/users/me/settings').catch(() => null), // Settings optional
     ])
+    
+    // Convert Decimal values to numbers for nutritional values
+    if (recipeData.carbohydrates) recipeData.carbohydrates = Number(recipeData.carbohydrates)
+    if (recipeData.fats) recipeData.fats = Number(recipeData.fats)
+    if (recipeData.proteins) recipeData.proteins = Number(recipeData.proteins)
+    if (recipeData.fibers) recipeData.fibers = Number(recipeData.fibers)
     
     recipe.value = recipeData
     userSettings.value = settings

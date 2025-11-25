@@ -10,7 +10,7 @@ import {
     IsOptional,
     IsUrl,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { DietType, Difficulty, Unit } from '@prisma/client';
 
 class RecipeSubmissionIngredientDto {
@@ -87,6 +87,35 @@ export class SubmitRecipeDto {
     @IsEnum(DietType, { each: true })
     @IsOptional()
     dietTypes?: DietType[];
+
+    @IsInt()
+    @Min(0)
+    @IsOptional()
+    calories?: number;
+
+    @IsNumber()
+    @Min(0)
+    @IsOptional()
+    @Transform(({ value }) => value ? parseFloat(value) : undefined)
+    carbohydrates?: number;
+
+    @IsNumber()
+    @Min(0)
+    @IsOptional()
+    @Transform(({ value }) => value ? parseFloat(value) : undefined)
+    fats?: number;
+
+    @IsNumber()
+    @Min(0)
+    @IsOptional()
+    @Transform(({ value }) => value ? parseFloat(value) : undefined)
+    proteins?: number;
+
+    @IsNumber()
+    @Min(0)
+    @IsOptional()
+    @Transform(({ value }) => value ? parseFloat(value) : undefined)
+    fibers?: number;
 
     @IsArray()
     @ValidateNested({ each: true })

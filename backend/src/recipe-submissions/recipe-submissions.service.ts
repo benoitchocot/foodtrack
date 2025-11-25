@@ -47,6 +47,11 @@ export class RecipeSubmissionsService {
                 tags: submitDto.tags || [],
                 toolsRequired: submitDto.toolsRequired || [],
                 dietTypes: submitDto.dietTypes || [],
+                calories: submitDto.calories ?? null,
+                carbohydrates: submitDto.carbohydrates ?? null,
+                fats: submitDto.fats ?? null,
+                proteins: submitDto.proteins ?? null,
+                fibers: submitDto.fibers ?? null,
                 ingredients: {
                     create: await Promise.all(
                         submitDto.ingredients.map(async (ing) => {
@@ -204,6 +209,11 @@ export class RecipeSubmissionsService {
                 tags: submission.tags,
                 toolsRequired: submission.toolsRequired,
                 dietTypes: submission.dietTypes,
+                calories: submission.calories !== null && submission.calories !== undefined ? submission.calories : undefined,
+                carbohydrates: submission.carbohydrates !== null && submission.carbohydrates !== undefined ? Number(submission.carbohydrates) : undefined,
+                fats: submission.fats !== null && submission.fats !== undefined ? Number(submission.fats) : undefined,
+                proteins: submission.proteins !== null && submission.proteins !== undefined ? Number(submission.proteins) : undefined,
+                fibers: submission.fibers !== null && submission.fibers !== undefined ? Number(submission.fibers) : undefined,
                 ingredients: submission.ingredients.map((subIng: any) => {
                     const ingredientId = ingredientMap.get(subIng.id);
                     if (!ingredientId) {
@@ -234,6 +244,11 @@ export class RecipeSubmissionsService {
                 tags: submission.tags,
                 toolsRequired: submission.toolsRequired,
                 dietTypes: submission.dietTypes,
+                calories: submission.calories !== null && submission.calories !== undefined ? submission.calories : undefined,
+                carbohydrates: submission.carbohydrates !== null && submission.carbohydrates !== undefined ? Number(submission.carbohydrates) : undefined,
+                fats: submission.fats !== null && submission.fats !== undefined ? Number(submission.fats) : undefined,
+                proteins: submission.proteins !== null && submission.proteins !== undefined ? Number(submission.proteins) : undefined,
+                fibers: submission.fibers !== null && submission.fibers !== undefined ? Number(submission.fibers) : undefined,
                 ingredients: submission.ingredients.map((subIng: any) => {
                     const ingredientId = ingredientMap.get(subIng.id);
                     if (!ingredientId) {
