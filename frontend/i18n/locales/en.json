@@ -31,7 +31,8 @@
     "noData": "No data",
     "goBackHome": "Back to home",
     "offlineMode": "Offline mode - Displaying cached data",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "menu": "Menu"
   },
   "auth": {
     "login": "Login",

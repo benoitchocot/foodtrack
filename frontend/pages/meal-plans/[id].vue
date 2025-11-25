@@ -3,11 +3,9 @@
     <AppHeader>
       <template #actions>
         <NuxtLink to="/meal-plans" class="btn btn-secondary text-sm">
+          <Icon name="mdi:arrow-left" class="mr-2" />
           {{ $t('mealPlans.backToMealPlans') }}
         </NuxtLink>
-        <button @click="handleLogout" class="btn btn-secondary text-sm">
-          {{ $t('auth.logout') }}
-        </button>
       </template>
     </AppHeader>
 
@@ -25,14 +23,14 @@
 
       <div v-else-if="mealPlan" class="space-y-6">
         <div class="card">
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ mealPlan.title }}</h1>
-          <p v-if="mealPlan.createdAt" class="text-gray-600 mb-4">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">{{ mealPlan.title }}</h1>
+          <p v-if="mealPlan.createdAt" class="text-sm sm:text-base text-gray-600 mb-4">
             {{ $t('mealPlans.created') }} {{ formatDate(mealPlan.createdAt) }}
           </p>
           <div class="flex gap-2">
             <button 
               @click="generateShoppingList" 
-              class="btn btn-primary"
+              class="btn btn-primary text-sm sm:text-base w-full sm:w-auto"
               :disabled="generatingList"
             >
               <Icon name="mdi:cart" class="mr-2" />
@@ -42,7 +40,7 @@
         </div>
 
         <div class="card">
-          <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ $t('mealPlans.detail.recipes') }} ({{ mealPlan.recipes?.length || 0 }})</h2>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{{ $t('mealPlans.detail.recipes') }} ({{ mealPlan.recipes?.length || 0 }})</h2>
           
           <div v-if="mealPlan.recipes && mealPlan.recipes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div

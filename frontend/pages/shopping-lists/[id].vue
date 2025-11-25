@@ -3,11 +3,9 @@
     <AppHeader>
       <template #actions>
         <NuxtLink to="/shopping-lists" class="btn btn-secondary text-sm">
+          <Icon name="mdi:arrow-left" class="mr-2" />
           {{ $t('shoppingLists.backToShoppingLists') }}
         </NuxtLink>
-        <button @click="handleLogout" class="btn btn-secondary text-sm">
-          {{ $t('auth.logout') }}
-        </button>
       </template>
     </AppHeader>
 
@@ -25,43 +23,44 @@
 
       <div v-else-if="shoppingList" class="space-y-6">
         <div class="card">
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ shoppingList.title }}</h1>
-          <p v-if="shoppingList.createdAt" class="text-gray-600 mb-4">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">{{ shoppingList.title }}</h1>
+          <p v-if="shoppingList.createdAt" class="text-sm sm:text-base text-gray-600 mb-4">
             {{ $t('common.created') }} {{ formatDate(shoppingList.createdAt) }}
           </p>
-          <div class="flex items-center gap-4">
-            <div class="flex items-center text-sm text-gray-500">
-              <Icon name="mdi:check-circle" class="mr-1 text-green-600" />
-              {{ checkedCount }} / {{ totalItemsCount }} {{ $t('shoppingLists.checked') }}
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <div class="flex items-center text-xs sm:text-sm text-gray-500">
+              <Icon name="mdi:check-circle" class="mr-1 text-green-600 flex-shrink-0" />
+              <span class="whitespace-nowrap">{{ checkedCount }} / {{ totalItemsCount }} {{ $t('shoppingLists.checked') }}</span>
             </div>
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+            <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
               {{ totalItemsCount }} {{ $t('shoppingLists.items') }}
             </span>
           </div>
         </div>
 
         <div class="card">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-gray-900">{{ $t('shoppingLists.detail.items') }}</h2>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">{{ $t('shoppingLists.detail.items') }}</h2>
             <button
               @click="showFilters = !showFilters"
-              class="btn btn-secondary text-sm"
+              class="btn btn-secondary text-xs sm:text-sm w-full sm:w-auto"
             >
               <Icon :name="showFilters ? 'mdi:filter-off' : 'mdi:filter'" class="mr-2" />
-              {{ showFilters ? $t('shoppingLists.hideFilters') : $t('shoppingLists.showFilters') }}
+              <span class="hidden sm:inline">{{ showFilters ? $t('shoppingLists.hideFilters') : $t('shoppingLists.showFilters') }}</span>
+              <span class="sm:hidden">{{ showFilters ? $t('shoppingLists.hideFilters') : $t('shoppingLists.showFilters') }}</span>
             </button>
           </div>
 
           <!-- Category Filters -->
-          <div v-if="showFilters" class="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">{{ $t('shoppingLists.filterByCategory') }}</h3>
+          <div v-if="showFilters" class="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-3">{{ $t('shoppingLists.filterByCategory') }}</h3>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="category in availableCategories"
                 :key="category.value"
                 @click="toggleCategory(category.value)"
                 :class="[
-                  'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                  'px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors',
                   visibleCategories[category.value]
                     ? 'bg-primary-600 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -76,14 +75,14 @@
             <div class="mt-3 flex gap-2">
               <button
                 @click="showAllCategories"
-                class="text-sm text-primary-600 hover:text-primary-700"
+                class="text-xs sm:text-sm text-primary-600 hover:text-primary-700"
               >
                 {{ $t('shoppingLists.showAll') }}
               </button>
               <span class="text-gray-400">|</span>
               <button
                 @click="hideAllCategories"
-                class="text-sm text-primary-600 hover:text-primary-700"
+                class="text-xs sm:text-sm text-primary-600 hover:text-primary-700"
               >
                 {{ $t('shoppingLists.hideAll') }}
               </button>
@@ -98,10 +97,10 @@
               v-show="visibleCategories[category.value] && groupedItems[category.value]?.length > 0"
               class="border-b border-gray-200 pb-4 last:border-b-0"
             >
-              <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                <Icon :name="category.icon" class="mr-2 text-primary-600" />
-                {{ category.label }}
-                <span class="ml-2 text-sm font-normal text-gray-500">
+              <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 flex items-center flex-wrap gap-1 sm:gap-2">
+                <Icon :name="category.icon" class="text-primary-600 flex-shrink-0" />
+                <span>{{ category.label }}</span>
+                <span class="text-xs sm:text-sm font-normal text-gray-500">
                   ({{ groupedItems[category.value]?.length || 0 }})
                 </span>
               </h3>
@@ -110,21 +109,21 @@
                   v-for="item in sortedItems(category.value)"
                   :key="item.id"
                   @click="toggleItem(item.id, !item.checked)"
-                  class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  class="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     :checked="item.checked"
                     @click.stop
                     @change="toggleItem(item.id, ($event.target as HTMLInputElement).checked)"
-                    class="w-5 h-5 text-primary-600 rounded pointer-events-none"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 rounded pointer-events-none flex-shrink-0"
                   />
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                      <span :class="['font-medium', item.checked ? 'line-through text-gray-400' : 'text-gray-900']">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                      <span :class="['font-medium text-sm sm:text-base break-words', item.checked ? 'line-through text-gray-400' : 'text-gray-900']">
                         {{ item.ingredient.name }}
                       </span>
-                      <span class="text-gray-600">
+                      <span class="text-xs sm:text-sm text-gray-600 whitespace-nowrap flex-shrink-0">
                         {{ item.quantity }} {{ translateUnit(item.unit) }}
                       </span>
                     </div>

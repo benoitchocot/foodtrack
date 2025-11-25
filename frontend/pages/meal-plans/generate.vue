@@ -3,6 +3,7 @@
     <AppHeader>
       <template #actions>
         <NuxtLink to="/meal-plans" class="btn btn-secondary text-sm">
+          <Icon name="mdi:arrow-left" class="mr-2" />
           {{ $t('mealPlans.backToMealPlans') }}
         </NuxtLink>
       </template>
@@ -10,7 +11,7 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="card">
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">{{ $t('mealPlans.generate.title') }}</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">{{ $t('mealPlans.generate.title') }}</h2>
 
         <form v-if="!generatedPlan" @submit.prevent="handleGenerate" class="space-y-6">
           <div>
@@ -46,29 +47,29 @@
       <!-- Generated Recipes Preview -->
       <div v-if="generatedPlan" class="mt-8 space-y-6">
         <div class="card">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-2xl font-bold text-gray-900 mb-2">✓ {{ $t('mealPlans.generate.generated') }}</h3>
-              <p class="text-gray-600">{{ generatedPlan.title }}</p>
-              <p class="text-sm text-gray-500 mt-1">{{ generatedPlan.recipes?.length || 0 }} {{ $t('mealPlans.generate.recipesSelected') }}</p>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">✓ {{ $t('mealPlans.generate.generated') }}</h3>
+              <p class="text-sm sm:text-base text-gray-600 break-words">{{ generatedPlan.title }}</p>
+              <p class="text-xs sm:text-sm text-gray-500 mt-1">{{ generatedPlan.recipes?.length || 0 }} {{ $t('mealPlans.generate.recipesSelected') }}</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 @click="handleNewGeneration"
-                class="btn btn-secondary"
+                class="btn btn-secondary text-xs sm:text-sm w-full sm:w-auto"
               >
-                <Icon name="mdi:plus" class="mr-2" />
+                <Icon name="mdi:plus" class="mr-2 flex-shrink-0" />
                 {{ $t('mealPlans.generate.newGeneration') }}
               </button>
               <button
                 @click="handleRegenerate"
                 :disabled="loading"
-                class="btn btn-secondary"
+                class="btn btn-secondary text-xs sm:text-sm w-full sm:w-auto"
               >
-                <Icon name="mdi:refresh" class="mr-2" />
+                <Icon name="mdi:refresh" class="mr-2 flex-shrink-0" />
                 {{ loading ? $t('mealPlans.generate.generating') : $t('mealPlans.generate.regenerate') }}
               </button>
-              <NuxtLink :to="`/meal-plans/${generatedPlan.id}`" class="btn btn-primary">
+              <NuxtLink :to="`/meal-plans/${generatedPlan.id}`" class="btn btn-primary text-xs sm:text-sm w-full sm:w-auto text-center">
                 {{ $t('mealPlans.generate.viewMealPlan') }}
               </NuxtLink>
             </div>
