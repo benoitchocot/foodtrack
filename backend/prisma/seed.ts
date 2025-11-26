@@ -1,4 +1,6 @@
 import { PrismaClient, IngredientCategory, Unit, Difficulty, DietType } from '@prisma/client';
+import { extendedIngredients } from './seed-ingredients-extended';
+import { extendedRecipes } from './seed-recipes-extended';
 
 const prisma = new PrismaClient();
 
@@ -134,7 +136,15 @@ async function main() {
             { name: 'herbes de provence', category: IngredientCategory.SPICES, defaultUnit: Unit.TSP },
         ],
         });
-        console.log('✅ Ingredients seeded');
+        console.log('✅ Base ingredients seeded');
+        
+        // Add extended ingredients
+        console.log('Seeding extended ingredients...');
+        await prisma.ingredient.createMany({
+            skipDuplicates: true,
+            data: extendedIngredients,
+        });
+        console.log(`✅ Extended ingredients seeded (${extendedIngredients.length} ingredients)`);
     } catch (error: any) {
         if (error.code === 'P2021') {
             console.log('⚠️  ingredients table does not exist yet, skipping seed...');
@@ -470,11 +480,17 @@ async function main() {
         prepTime: number;
         cookTime: number;
         difficulty: Difficulty;
+        servings?: number;
         tags: string[];
         toolsRequired: string[];
         dietTypes: DietType[];
         ingredients: Array<{ name: string; quantity: number; unit: Unit; optional?: boolean }>;
         steps: Array<{ stepNumber: number; instruction: string }>;
+        calories?: number;
+        carbohydrates?: number;
+        fats?: number;
+        proteins?: number;
+        fibers?: number;
     }) => {
         return prisma.recipe.create({
             data: {
@@ -484,10 +500,15 @@ async function main() {
                 prepTime: data.prepTime,
                 cookTime: data.cookTime,
                 difficulty: data.difficulty,
-                servings: 1, // All recipes for 1 person
+                servings: data.servings || 1,
                 tags: data.tags,
                 toolsRequired: data.toolsRequired,
                 dietTypes: data.dietTypes,
+                calories: data.calories ?? null,
+                carbohydrates: data.carbohydrates ?? null,
+                fats: data.fats ?? null,
+                proteins: data.proteins ?? null,
+                fibers: data.fibers ?? null,
                 ingredients: {
                     create: data.ingredients.map(ing => ({
                         ingredientId: getIngredient(ing.name).id,
@@ -1372,7 +1393,70 @@ async function main() {
         ],
     });
 
-    console.log('✅ Created 40 recipes');
+    console.log('✅ Created 40 base recipes');
+    
+    // Add extended recipes
+    console.log(`Adding ${extendedRecipes.length} extended recipes...`);
+    let createdExtendedRecipes = 0;
+    for (const recipeData of extendedRecipes) {
+        try {
+            // Try to get each ingredient, skip if not found (some ingredients might not exist yet)
+            const ingredients = recipeData.ingredients.map(ing => {
+                try {
+                    const ingredient = getIngredient(ing.name);
+                    return {
+                        ...ing,
+                        ingredientId: ingredient.id,
+                    };
+                } catch (e) {
+                    console.warn(`⚠️  Ingredient "${ing.name}" not found for recipe "${recipeData.title}", skipping...`);
+                    return null;
+                }
+            }).filter(ing => ing !== null) as Array<{ name: string; quantity: number; unit: Unit; optional?: boolean; ingredientId: string }>;
+            
+            if (ingredients.length === 0) {
+                console.warn(`⚠️  Recipe "${recipeData.title}" has no valid ingredients, skipping...`);
+                continue;
+            }
+            
+            await prisma.recipe.create({
+                data: {
+                    title: recipeData.title,
+                    slug: recipeData.slug,
+                    description: recipeData.description,
+                    prepTime: recipeData.prepTime,
+                    cookTime: recipeData.cookTime,
+                    difficulty: recipeData.difficulty,
+                    servings: recipeData.servings || 1,
+                    tags: recipeData.tags,
+                    toolsRequired: recipeData.toolsRequired,
+                    dietTypes: recipeData.dietTypes,
+                    calories: recipeData.calories ?? null,
+                    carbohydrates: recipeData.carbohydrates ?? null,
+                    fats: recipeData.fats ?? null,
+                    proteins: recipeData.proteins ?? null,
+                    fibers: recipeData.fibers ?? null,
+                    ingredients: {
+                        create: ingredients.map(ing => ({
+                            ingredientId: ing.ingredientId,
+                            quantity: ing.quantity,
+                            unit: ing.unit,
+                            optional: ing.optional || false,
+                        })),
+                    },
+                    steps: {
+                        create: recipeData.steps,
+                    },
+                },
+            });
+            createdExtendedRecipes++;
+        } catch (e: any) {
+            console.warn(`⚠️  Error creating recipe "${recipeData.title}": ${e.message}`);
+        }
+    }
+    
+    console.log(`✅ Created ${createdExtendedRecipes} extended recipes`);
+    console.log(`✅ Total: ${40 + createdExtendedRecipes} recipes`);
     console.log('🎉 Seed completed successfully!');
 }
 
