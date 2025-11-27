@@ -80,27 +80,49 @@ if docker exec mealplans-postgres pg_isready -U mealplans_user -d mealplans_db >
     
     # Backend
     echo "🚀 Démarrage du backend..."
+    echo "   Le docker-entrypoint.sh appliquera automatiquement le schéma avec 'db push'"
     docker compose up -d mealplans-backend
-    sleep 15
     
-    # Migrations
-    echo "📦 Vérification des migrations..."
-    docker exec mealplans-backend ls -la /app/prisma/migrations/ || echo "⚠️  Migrations directory not found"
+    # Attendre que le backend soit prêt et que docker-entrypoint.sh ait appliqué le schéma
+    echo "⏳ Attente que le backend démarre et applique le schéma (via docker-entrypoint.sh)..."
     
-    echo "📦 Application des migrations..."
-    docker exec mealplans-backend npx prisma migrate deploy || {
-        echo "⚠️  migrate deploy failed, trying db push..."
-        docker exec mealplans-backend npx prisma db push --accept-data-loss
-    }
+    max_attempts=60
+    attempt=0
+    schema_applied=false
+    while [ $attempt -lt $max_attempts ]; do
+        # Vérifier si le schéma a été appliqué
+        if docker logs mealplans-backend 2>&1 | grep -q "Database schema applied successfully"; then
+            echo "✅ Backend démarré et schéma appliqué"
+            schema_applied=true
+            break
+        fi
+        # Vérifier si l'application a démarré (signe que le schéma est appliqué)
+        if docker logs mealplans-backend 2>&1 | grep -q "Starting application\|Application is running\|Nest application successfully started"; then
+            echo "✅ Backend démarré (schéma déjà appliqué)"
+            schema_applied=true
+            break
+        fi
+        # Vérifier les erreurs
+        if docker logs mealplans-backend 2>&1 | grep -q "Failed to apply database schema"; then
+            echo "❌ Échec de l'application du schéma"
+            docker logs mealplans-backend --tail 30
+            exit 1
+        fi
+        attempt=$((attempt + 1))
+        sleep 2
+    done
     
-    # Attendre un peu pour que les migrations soient bien appliquées
-    sleep 2
+    if [ "$schema_applied" = false ]; then
+        echo "⚠️  Timeout en attendant le démarrage du backend"
+        echo "📋 Derniers logs du backend :"
+        docker logs mealplans-backend --tail 30
+        echo ""
+        echo "⚠️  Le backend pourrait encore être en train de démarrer..."
+        echo "   Vous pouvez vérifier les logs avec: docker logs mealplans-backend -f"
+    fi
     
-    # Seed (seulement si les tables existent)
-    echo "🌱 Seed..."
-    docker exec mealplans-backend npm run prisma:seed || {
-        echo "⚠️  Seed failed, but continuing..."
-    }
+    # Attendre un peu pour que tout soit prêt
+    sleep 5
     
     # Frontend
     echo "🎨 Frontend..."
