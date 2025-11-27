@@ -86,7 +86,7 @@ Pour que l'application fonctionne sur mobile, vous devez configurer l'URL de l'A
 Définissez la variable d'environnement avant de générer :
 
 ```bash
-export NUXT_PUBLIC_API_BASE=https://votre-api.com
+export NUXT_PUBLIC_API_BASE=https://apifood.chocot.be
 npm run generate
 npm run cap:sync
 ```

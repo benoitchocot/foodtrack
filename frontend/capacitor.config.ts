@@ -6,6 +6,8 @@ const config: CapacitorConfig = {
   webDir: '.output/public',
   server: {
     androidScheme: 'https',
+    allowNavigation: ['https://apifood.chocot.be']
+
     // Uncomment for development with local backend
     // url: 'http://YOUR_LOCAL_IP:3001',
     // cleartext: true
