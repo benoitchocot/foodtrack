@@ -28,8 +28,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL for Prisma and netcat for database connection check
+RUN apk add --no-cache openssl netcat-openbsd
 
 # Copy package files and install production dependencies
 COPY package*.json ./

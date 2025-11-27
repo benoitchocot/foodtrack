@@ -3,8 +3,23 @@ set -e
 
 echo "⏳ Waiting for database to be ready..."
 
-# Attendre que PostgreSQL soit accessible
-until echo 'SELECT 1;' | npx prisma db execute --stdin 2>/dev/null; do
+# Extraire les informations de connexion depuis DATABASE_URL
+# Format: postgresql://user:password@host:port/database
+DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+if [ -z "$DB_HOST" ]; then
+  # Si l'extraction échoue, utiliser la valeur par défaut
+  DB_HOST="mealplans-postgres"
+fi
+
+DB_PORT=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+if [ -z "$DB_PORT" ]; then
+  DB_PORT="5432"
+fi
+
+echo "Checking database connection at $DB_HOST:$DB_PORT..."
+
+# Attendre que PostgreSQL soit accessible via TCP
+until nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; do
   echo "Database not ready, waiting..."
   sleep 2
 done
