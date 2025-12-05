@@ -79,13 +79,16 @@ export class MealPlansService {
             toolsAvailable,
         );
 
+        // Use provided numberOfServings or fall back to user settings or default
+        const servings = generateDto.numberOfServings || settings?.householdSize || 4;
+
         // Add selected recipes to meal plan (without date planning)
         for (const recipe of selectedRecipes) {
             await this.prisma.mealPlanRecipe.create({
                 data: {
                     mealPlanId: mealPlan.id,
                     recipeId: recipe.id,
-                    servings: settings?.householdSize || 4,
+                    servings,
                 },
             });
         }

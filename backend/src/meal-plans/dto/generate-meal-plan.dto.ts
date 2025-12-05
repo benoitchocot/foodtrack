@@ -7,6 +7,12 @@ export class GenerateMealPlanDto {
     @Max(21)
     numberOfMeals: number;
 
+    @IsInt()
+    @Min(1)
+    @Max(100)
+    @IsOptional()
+    numberOfServings?: number;
+
     // Optional overrides for user settings
     @IsArray()
     @IsEnum(DietType, { each: true })
