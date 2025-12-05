@@ -52,10 +52,36 @@
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg">
               <Icon name="mdi:account-group" class="text-2xl text-primary-600 mb-2 mx-auto" />
-              <p class="text-sm text-gray-600">{{ $t('recipes.servings') }}</p>
-              <p class="text-lg font-semibold">
+              <p class="text-sm text-gray-600 mb-2">{{ $t('recipes.servings') }}</p>
+              <div v-if="recipe.isAdaptable !== false" class="flex items-center justify-center gap-2">
+                <button
+                  @click="decreaseServings"
+                  :disabled="localServings <= 1"
+                  class="p-1 rounded-full hover:bg-primary-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  :title="$t('recipes.adjustServings')"
+                >
+                  <Icon name="mdi:minus-circle" class="text-primary-600 text-xl" />
+                </button>
+                <input
+                  v-model.number="localServings"
+                  @input="handleServingsChange"
+                  type="number"
+                  min="1"
+                  :max="recipe.isAdaptable === false ? recipe.servings : 100"
+                  class="w-16 text-center text-lg font-semibold border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
+                />
+                <button
+                  @click="increaseServings"
+                  :disabled="localServings >= 100"
+                  class="p-1 rounded-full hover:bg-primary-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  :title="$t('recipes.adjustServings')"
+                >
+                  <Icon name="mdi:plus-circle" class="text-primary-600 text-xl" />
+                </button>
+              </div>
+              <p v-else class="text-lg font-semibold">
                 {{ adjustedRecipe.servings }}
-                <span v-if="recipe.isAdaptable === false" class="text-xs text-gray-500 ml-1">
+                <span class="text-xs text-gray-500 ml-1">
                   ({{ $t('recipes.fixedServings') }})
                 </span>
               </p>
@@ -352,7 +378,21 @@ const hoveredRating = ref(0)
 
 const householdSize = computed(() => userSettings.value?.householdSize || 1)
 
-// Adjust quantities based on household size (only if recipe is adaptable)
+// Local servings adjustment (starts with household size, can be adjusted)
+const localServings = ref<number>(1)
+
+// Initialize localServings when recipe or settings are loaded
+watch([recipe, userSettings], () => {
+  if (recipe.value) {
+    if (recipe.value.isAdaptable !== false) {
+      localServings.value = householdSize.value || recipe.value.servings || 1
+    } else {
+      localServings.value = recipe.value.servings || 1
+    }
+  }
+}, { immediate: true })
+
+// Adjust quantities based on local servings (only if recipe is adaptable)
 const adjustedRecipe = computed(() => {
   if (!recipe.value) return null
   
@@ -361,16 +401,16 @@ const adjustedRecipe = computed(() => {
     return recipe.value
   }
   
-  // Calculate ratio: household size / recipe servings
-  const ratio = householdSize.value / (recipe.value.servings || 1)
+  // Calculate ratio: local servings / recipe servings
+  const ratio = localServings.value / (recipe.value.servings || 1)
   
   // Nutritional values are stored "per serving" according to the schema
-  // They should always be displayed per serving, regardless of household size adjustment
+  // They should always be displayed per serving, regardless of servings adjustment
   // (ingredients scale, but nutritional values remain per serving)
   
   return {
     ...recipe.value,
-    servings: householdSize.value,
+    servings: localServings.value,
     ingredients: recipe.value.ingredients.map((ing: any) => ({
       ...ing,
       quantity: Number(ing.quantity) * ratio,
@@ -383,6 +423,31 @@ const adjustedRecipe = computed(() => {
     fibers: nutritionalValues.value?.fibers || null,
   }
 })
+
+// Handle servings change
+const handleServingsChange = () => {
+  if (!recipe.value) return
+  
+  // Ensure valid range
+  if (localServings.value < 1) {
+    localServings.value = 1
+  } else if (localServings.value > 100) {
+    localServings.value = 100
+  }
+}
+
+// Increase/decrease servings
+const increaseServings = () => {
+  if (localServings.value < 100) {
+    localServings.value++
+  }
+}
+
+const decreaseServings = () => {
+  if (localServings.value > 1) {
+    localServings.value--
+  }
+}
 
 // Normalize image URL to fix localhost issues
 const normalizedRecipeImageUrl = computed(() => {

@@ -30,6 +30,22 @@
             <p class="text-sm text-gray-500 mt-1">{{ $t('mealPlans.generate.numberOfMealsHint') }}</p>
           </div>
 
+          <div>
+            <label for="numberOfServings" class="block text-sm font-medium text-gray-700 mb-1">
+              {{ $t('mealPlans.generate.numberOfServings') }}
+            </label>
+            <input
+              id="numberOfServings"
+              v-model.number="numberOfServings"
+              type="number"
+              min="1"
+              max="100"
+              required
+              class="input"
+            />
+            <p class="text-sm text-gray-500 mt-1">{{ $t('mealPlans.generate.numberOfServingsHint') }}</p>
+          </div>
+
           <div v-if="error" class="text-red-600 text-sm">
             {{ error }}
           </div>
@@ -372,11 +388,13 @@ const { settings, fetchSettings } = useUserSettings()
 const { normalizeImageUrl } = useImageUrl()
 
 const numberOfMeals = ref(5)
+const numberOfServings = ref(2) // Will be initialized from user settings
 const loading = ref(false)
 const error = ref('')
 const generatedPlan = ref<any>(null)
 const lastGenerationParams = ref<{
   numberOfMeals: number
+  numberOfServings?: number
 } | null>(null)
 
 // Recipe detail modal state
@@ -414,7 +432,11 @@ const availableTags = [
 
 onMounted(async () => {
   await loadFavorites()
-  await fetchSettings()
+  const userSettings = await fetchSettings()
+  // Initialize numberOfServings from user settings
+  if (userSettings?.householdSize) {
+    numberOfServings.value = userSettings.householdSize
+  }
 })
 
 const handleGenerate = async () => {
@@ -422,8 +444,9 @@ const handleGenerate = async () => {
   error.value = ''
   generatedPlan.value = null
   
-  const params = {
+  const params: any = {
     numberOfMeals: numberOfMeals.value,
+    numberOfServings: numberOfServings.value,
   }
   
   // Save parameters for regeneration
@@ -482,10 +505,15 @@ const handleRegenerate = async () => {
   }
 }
 
-const handleNewGeneration = () => {
+const handleNewGeneration = async () => {
   generatedPlan.value = null
   lastGenerationParams.value = null
   error.value = ''
+  // Reset numberOfServings to user settings
+  const userSettings = settings.value || await fetchSettings()
+  if (userSettings?.householdSize) {
+    numberOfServings.value = userSettings.householdSize
+  }
 }
 
 const handleRemoveRecipe = async (mealPlanRecipeId: string, recipeId: string) => {
@@ -572,10 +600,9 @@ const handleAddRandomRecipe = async () => {
     const randomRecipe = availableRecipes[Math.floor(Math.random() * availableRecipes.length)]
     
     // Add to plan
-    const householdSize = userSettings?.householdSize || 2
     await api.post(`/meal-plans/${generatedPlan.value.id}/recipes`, {
       recipeId: randomRecipe.id,
-      servings: householdSize,
+      servings: numberOfServings.value,
     })
     
     // Refresh the plan
@@ -592,12 +619,9 @@ const handleSelectRecipe = async (recipeId: string) => {
   if (!generatedPlan.value) return
   
   try {
-    const userSettings = settings.value || await fetchSettings()
-    const householdSize = userSettings?.householdSize || 2
-    
     await api.post(`/meal-plans/${generatedPlan.value.id}/recipes`, {
       recipeId,
-      servings: householdSize,
+      servings: numberOfServings.value,
     })
     
     // Refresh the plan
