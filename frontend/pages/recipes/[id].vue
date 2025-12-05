@@ -322,11 +322,15 @@
 </template>
 
 <script setup lang="ts">
+import { format } from 'date-fns'
+import { fr, enUS } from 'date-fns/locale'
+
 const route = useRoute()
 const { logout } = useAuth()
 const api = useApi()
 const { translateDifficulty, translateUnit, translateTag } = useTranslations()
 const { normalizeImageUrl } = useImageUrl()
+const { locale } = useI18n()
 
 const recipe = ref<any>(null)
 const userSettings = ref<any>(null)
@@ -423,12 +427,16 @@ const hasNutritionalValues = computed(() => {
 })
 
 // Format date
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return ''
+  try {
+    const dateLocale = locale.value === 'en' ? enUS : fr
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) return ''
+    return format(dateObj, 'd MMMM yyyy', { locale: dateLocale })
+  } catch {
+    return ''
+  }
 }
 
 // Get user display name

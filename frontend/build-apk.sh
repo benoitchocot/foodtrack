@@ -29,6 +29,10 @@ echo "🤖 Construction de l'APK..."
 cd android
 ./gradlew assembleDebug
 
+echo "🤖 Construction de l'AAB..."
+
+./gradlew bundleRelease
+
 echo ""
 echo "✅ APK généré avec succès !"
 echo "📱 Fichier: android/app/build/outputs/apk/debug/app-debug.apk"

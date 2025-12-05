@@ -20,6 +20,11 @@ export class DecimalInterceptor implements NestInterceptor {
       return data;
     }
 
+    // Handle Date objects - ensure they are serialized as ISO strings
+    if (data instanceof Date) {
+      return data.toISOString();
+    }
+
     // Handle Decimal type from Prisma
     // Prisma Decimal objects have a toNumber() method and a toString() method
     if (data && typeof data === 'object') {
